@@ -11,19 +11,13 @@ const Container = styled.View`
   width: 100%;  
 `;
 
-const Label = styled.Text`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.label};
-`;
-
 const StyledImage = styled.Image`
   margin-top: 10px;
   width: 100px;
   height: 100px;
 `;
 
-const Image = ({ title, url, label, onChangeImage, showImage, containerStyle }) => {
+const Image = ({ title, url, onChangeImage, showImage, containerStyle }) => {
 
   const [uploaded, setUploaded] = useState(false);
 
@@ -59,7 +53,6 @@ const Image = ({ title, url, label, onChangeImage, showImage, containerStyle }) 
   };
   return (
     <Container style={containerStyle}>
-      {label && <Label>{label}</Label>}
       {showImage && url && <StyledImage source={{ uri: url }} />}
       <SmallButton title={title} onPress={_handleEditButton} uploaded={uploaded} />
     </Container>

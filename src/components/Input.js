@@ -106,6 +106,7 @@ const Input = forwardRef(
           autoCorrect={false}
           textContentType="none" // iOS only
           underlineColorAndroid="transparent" // Android only
+          keyboardType={keyboardType}
         />
         {hasButton && 
         <InputButton 

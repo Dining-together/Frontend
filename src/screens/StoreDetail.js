@@ -159,7 +159,8 @@ const StoreDetail = ({navigation, route}) => {
 
     const carouselRef = useRef();
     const [indexSelected, setIndexSelected] = useState(0);
-    
+    const [isUser, setIsUset] = useState(true);
+
     const onSelect = indexSelected => {
         setIndexSelected(indexSelected);
     };
@@ -169,7 +170,7 @@ const StoreDetail = ({navigation, route}) => {
 
     const [isStar, setIsStar] = useState(false);
     
-    const _onMessagePress = () => {navigation.navigate("Message")};
+    const _onMessagePress = () => {navigation.navigate("Message", {name: "가게 이름"+id})};
 
     const _onStarPress = () => {setIsStar(!isStar)};
 
@@ -179,8 +180,8 @@ const StoreDetail = ({navigation, route}) => {
         navigation.setOptions({
             headerTitle: "",
             headerRight: () => (
-                (<MaterialCommunityIcons name="send" size={35} onPress={_onMessagePress}
-                    style={{ marginRight: 15, marginBottom: 3, marginTop: 3, opacity: 0.7 }} />)
+                isUser ?(<MaterialCommunityIcons name="send" size={35} onPress={_onMessagePress}
+                    style={{ marginRight: 15, marginBottom: 3, marginTop: 3, opacity: 0.7 }} />) : null
             )
         });
     }, []);

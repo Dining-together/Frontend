@@ -1,9 +1,8 @@
-import React,{useContext} from 'react';
+import React from 'react';
 import styled from "styled-components/native";
 import MypageButton from '../components/MypageButton';
 import ProfileImage from '../components/ProfileImage';
 import SmallButton from '../components/SmallButton';
-import {LoginContext} from "../contexts";
 
 const Container = styled.View`
     background-color: ${({theme})=> theme.background};
@@ -51,8 +50,6 @@ const LogoutContainer = styled.View`
 `;
 
 const Mypage_User = ( {navigation} ) => {
-    const {setSuccess} = useContext(LoginContext);
-
     return (
         <Container>
             
@@ -70,20 +67,38 @@ const Mypage_User = ( {navigation} ) => {
                 </ProfileButton>
                 </ProfileContainer>
                 <LogoutContainer>
-                     <SmallButton title="로그아웃" onPress={ () => {setSuccess(false)} } containerStyle={{marginTop: 0}} />
+                     <SmallButton title="로그아웃" onPress={ () => {} } containerStyle={{marginTop: 0}} />
                 </LogoutContainer>
                
             </InfoContainer>
             
             <IconContainer>
-                <MypageButton title='이용내역' name='list-alt' />
-                <MypageButton title='리뷰관리' name='thumb-up' />
-                <MypageButton title='공고관리' name='description' />
+                <MypageButton title='이용내역' name='list-alt'   
+                    onPress={() => {
+                        navigation.navigate("UseManage");
+                }} />
+                <MypageButton title='리뷰관리' name='thumb-up'   
+                    onPress={() => {
+                        navigation.navigate("ReviewManage",{ isUser: true });
+                }}/>
+                <MypageButton title='공고관리' name='description'
+                    onPress={() => {
+                        navigation.navigate("BidManageTab", { isUser: true });
+                }}  />
             </IconContainer>
             <IconContainer>
-                <MypageButton title='결제관리' name='payment' /> 
-                <MypageButton title='채팅관리' name='chat' />
-                <MypageButton title='즐겨찾기' name='star' />
+                <MypageButton title='결제관리' name='payment'   
+                    onPress={() => {
+                        navigation.navigate("PayManage");
+                }} /> 
+                <MypageButton title='채팅관리' name='chat'  
+                    onPress={() => {
+                        navigation.navigate("ChatManage");
+                }}/>
+                <MypageButton title='즐겨찾기' name='star'  
+                    onPress={() => {
+                        navigation.navigate("Bookmark",{ isUser: true });
+                }}/>
             </IconContainer>
         </Container>
     );

@@ -161,8 +161,8 @@ const AuctionBid = ({ navigation }) => {
                     <Title size={22}>메뉴</Title>
                     {menu.map(item =>
                         <RowItemContainer onPress={() => { setMenuRecommend(item.name); setModal(false); }}>
-                            <Menu><Label>key={item.id}{item.name}</Label></Menu>
-                            <Menu><Label>key={item.id}{item.price}</Label></Menu>
+                            <Menu><Label key={item.id}>{item.name}</Label></Menu>
+                            <Menu><Label key={item.id}>{item.price}</Label></Menu>
                         </RowItemContainer>
                     )}
                 </MenuContainer>

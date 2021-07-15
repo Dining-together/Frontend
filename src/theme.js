@@ -63,4 +63,11 @@ export const theme = {
     opacityTextColor: color.opacityDark,
     mapButtonColor: color.mapButton,
     transparentColor: color.transparent,
+
+    sendButtonActivate: color.blue,
+    sendButtonInactivate: color.grey,
+
+    opacityTextColor: color.opacityDark,
+
+    chatTextColor: "#deeffc",
 };

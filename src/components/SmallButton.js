@@ -11,7 +11,6 @@ const Container = styled.TouchableOpacity`
     height: auto;
     padding: 10px;
     opacity: ${({disabled}) => (disabled? 0.5 : 1)};
-    margin-top: 10px;
 `;
 
 const Title = styled.Text`
@@ -20,7 +19,7 @@ const Title = styled.Text`
     color: ${({theme, isFilled}) => isFilled? theme.buttonTextColor : theme.buttonUnfilledTitle };
 `;
 
-const SmallButton = ({containerStyle, title, onPress, isFilled, disabled, uploaded}) => {
+const SmallButton = ({showButton, containerStyle, title, onPress, isFilled, disabled, uploaded}) => {
     return (
         <Container 
         style={containerStyle} 

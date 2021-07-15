@@ -91,7 +91,7 @@ const InfoText = ({value, onChangeText, placeholder,
 };
 
 InfoText.propTypes = {
-  label: PropTypes.string.isRequired,
+  label: PropTypes.string,
   content: PropTypes.string,
   value: PropTypes.string,
   onChangeText: PropTypes.func,

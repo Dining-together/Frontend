@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
-import {notices} from "../utils/data";
+import {chatrooms} from "../utils/data";
 import styled from "styled-components/native";
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import {MaterialCommunityIcons} from "@expo/vector-icons";
+import {FlatList} from 'react-native';
+import moment from 'moment';
 
-const AlertContainer = styled.View`
+const AlertContainer = styled.TouchableOpacity`
     flex: 1;
     align-items: center;
     flex-direction: row;
@@ -12,16 +12,13 @@ const AlertContainer = styled.View`
     border-bottom-width: 0.5px;
     border-top-width: 0.5px;
     border-color: ${({theme}) => theme.label};
-`;
-
-const List = styled.ScrollView`
-    flex: 1;
+    background-color: ${({ theme }) => theme.background};
 `;
 
 const ImageContainer = styled.View`
     align-items: center;
     justify-content: center;
-    margin-right: 10px;
+    margin-right: 15px;
 `;
 
 const TextContainer = styled.View`
@@ -29,12 +26,11 @@ const TextContainer = styled.View`
 `;
 
 const TitleContainer = styled.View`
-    width: 90%;
+    width: 95%;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding-right: 10%;
-    margin-bottom: 2%;
+    margin-bottom: 3%;
 `;
 
 const StyledImage = styled.Image`
@@ -61,54 +57,51 @@ const DescText = styled.Text`
     color: ${({theme})=> theme.text};
 `;
 
-const CloseButton = styled.TouchableOpacity`
-    position: absolute;
-    top: 0;
-    right: 0;
-`;
-
 const Alert = ({item: {id, src, name, desc, time}, onPress}) => {
     return (
-        <AlertContainer>
+        <AlertContainer onPress={onPress}>
             <ImageContainer>
                 <StyledImage source={{uri: src}} />
             </ImageContainer>
             <TextContainer>
                 <TitleContainer>
                     <NameTitle>{name}</NameTitle>
-                    <TimeText>{time}시간전</TimeText>
+                    <TimeText>{getDateOrTime(time)}</TimeText>
                 </TitleContainer>
                 <DescText>{desc}</DescText>
-                <CloseButton onPress={onPress}>
-                <MaterialCommunityIcons name="close" size={20}/>
-                </CloseButton>
-            </TextContainer>
+                </TextContainer>
         </AlertContainer>
     );
 };
 
-const Notice = ({navigation}) => {
-    const [data, setData] = useState(notices);
+const getDateOrTime = ts => {
+    const now = moment().startOf('day');
+    const target = moment(ts).startOf('day');
+    return moment(ts).format(now.diff(target, 'days') > 0 ? 'YY/MM/DD' : 'HH:mm' );
+};
 
-    const _onPress = (id) => {
-        const newData = [...data];
-        setData(newData.filter(function(d) {return d.id != id}));
+const ChatManage = ({navigation}) => {
+    const [data, setData] = useState(chatrooms);
+
+    const _handleMessagePress = item => {
+        navigation.navigate("Message", {name: item.name});
     };
 
-
     return (
-        <KeyboardAwareScrollView
-        extraScrollHeight={20}
-        >
-       <List>
-            {data.map(item => (
-                <Alert key={item['id'].toString()} item={item} onPress={() => _onPress(item['id'])} />
-            ))}
-        </List>
-        </KeyboardAwareScrollView>
+        <FlatList 
+            horizontal={false}
+            keyExtractor={item => item['id'].toString()}
+            data={data}
+            renderItem={({item}) => (
+                <Alert key={item['id'].toString()} item={item} 
+                    onPress = {() => _handleMessagePress(item)}
+                />
+
+        )}/>                
+
     );
 };
 
 
 
-export default Notice;
+export default ChatManage; 
