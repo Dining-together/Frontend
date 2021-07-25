@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import styled, {ThemeContext} from "styled-components/native";
 import {Text, Dimensions, FlatList} from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -96,26 +96,33 @@ const Auction = ({navigation}) => {
     const [open1, setOpen1] = useState(false);
     const [selected1, setSelected1] = useState(null);
     const [list1, setList1] = useState([
-        {label: "정렬기준1", value: "정렬기준1"},
-        {label: "정렬기준2", value: "정렬기준2"},
-        {label: "정렬기준3", value: "정렬기준3"}
+        {label: "최신순", value: "최신순"},
+        {label: "마감순", value: "마감순"},
     ]);
 
     const [open2, setOpen2] = useState(false);
     const [selected2, setSelected2] = useState(null);
     const [list2, setList2] = useState([
-        {label: "정렬기준1", value: "정렬기준1"},
-        {label: "정렬기준2", value: "정렬기준2"},
-        {label: "정렬기준3", value: "정렬기준3"}
+        {label: "전체", value: "전체"},
+        {label: "한식", value: "한식"},
+        {label: "중식", value: "중식"},
+        {label: "양식", value: "양식"},
+        {label: "일식", value: "일식"},
+        {label: "기타", value: "기타"},
     ]);
 
+    // 시도로 범위를 크게 vs 시도별 시군구까지 => api ? 
     const [open3, setOpen3] = useState(false);
     const [selected3, setSelected3] = useState(null);
     const [list3, setList3] = useState([
-        {label: "정렬기준1", value: "정렬기준1"},
-        {label: "정렬기준2", value: "정렬기준2"},
-        {label: "정렬기준3", value: "정렬기준3"}
+        {label: "서울특별시", value: "정렬기준1"},
+        {label: "부산광역시", value: "정렬기준2"},
+        {label: "대구광역시", value: "정렬기준3"}
     ]);
+
+    useEffect(()=> {
+        //data 정렬
+    }, [selected1, selected2, selected3]);
 
     const _onAuctionPress = item => {navigation.navigate("AuctionDetail",{id: item['id']})};
 
@@ -133,7 +140,7 @@ const Auction = ({navigation}) => {
                 setItems={setList1}
                 containerStyle={{width: WIDTH*0.28, position: "absolute", left: 5, top: 10,}}
                 textStyle={{color: theme.text, fontSize: 14, fontWeight: "bold"}}
-                placeholder="정렬1"
+                placeholder="정렬"
                 placeholderStyle={{color: theme.text, fontSize: 14, fontWeight: "bold"}}
                 listMode="SCROLLVIEW" 
                 style={{height: WIDTH*0.1}}
@@ -148,7 +155,7 @@ const Auction = ({navigation}) => {
                 setItems={setList2}
                 textStyle={{color: theme.text, fontSize: 14, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.28, position: "absolute", marginLeft: WIDTH*0.36, top: 10}}
-                placeholder="정렬2"
+                placeholder="메뉴"
                 placeholderStyle={{color: theme.text, fontSize: 14, fontWeight: "bold"}}
                 listMode="SCROLLVIEW" 
                 style={{height: WIDTH*0.1}}/>
@@ -162,7 +169,7 @@ const Auction = ({navigation}) => {
                 setItems={setList3}
                 textStyle={{color: theme.text, fontSize: 14, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.28, position: "absolute", right: 5, top: 10}}
-                placeholder="정렬3"
+                placeholder="지역"
                 placeholderStyle={{color: theme.text, fontSize: 14, fontWeight: "bold"}}
                 listMode="SCROLLVIEW" 
                 style={{height: WIDTH*0.1}}/>

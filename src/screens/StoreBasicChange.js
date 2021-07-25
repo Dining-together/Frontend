@@ -1,12 +1,15 @@
-import React, { useState,useEffect,useRef, useLayoutEffect } from 'react';
+import React, { useState,useEffect,useRef, useLayoutEffect, useContext } from 'react';
 import styled from "styled-components/native";
-import { Dimensions, Modal, View, StyleSheet,TouchableOpacity } from "react-native";
+import { Dimensions, Modal, View, StyleSheet,TouchableOpacity, Alert } from "react-native";
 import { DateTimePicker, SmallButton, ManageText } from '../components';
 import { theme } from '../theme';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Postcode from '@actbase/react-daum-postcode';
 import DropDownPicker from "react-native-dropdown-picker";
+import * as Location from "expo-location";
+import {LoginContext} from "../contexts";
+
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
@@ -31,7 +34,13 @@ const RowItemContainer = styled.View`
     border-bottom-width: ${({ border }) => border ? border : 1}px;
     border-color: ${({ theme }) => theme.label};
     margin: 5px 0 5px 0;
+`;
 
+const TypeContainer = styled.View`
+    position: absolute;
+    height: 200px;
+    left: 30px;
+    bottom: 45px;
 `;
 
 const StyledTextInput = styled.TextInput.attrs(({ theme }) => ({
@@ -63,9 +72,9 @@ const ErrorText = styled.Text`
     align-items: flex-start;
     width: 100%;
     height: 20px;
-    margin-bottom: 10px;
     line-height: 20px;
     color: ${({ theme }) => theme.errorText};
+    margin-left: 10px;
 `;
 const TimeContainer = styled.TouchableOpacity`
     background-color: ${({theme})=> theme.background}
@@ -85,6 +94,8 @@ const ButtonTitle = styled.Text`
 
 const StoreBasicChange = ({ navigation, route }) => {
 
+    const {allow} = useContext(LoginContext);
+    const [allowLoc, setAllowLoc] = useState(allow);
     // 업체 기본정보
     const [phoneNumber, setPhoneNumber] = useState('028888888');
     const [address, setAddress] = useState('');
@@ -98,7 +109,6 @@ const StoreBasicChange = ({ navigation, route }) => {
     const [opening, setOpening] = useState('');
     const [closing, setClosing] = useState('');
 
-
     // 업체 사진들
     const [photos, setPhotos] = useState();
 
@@ -109,6 +119,17 @@ const StoreBasicChange = ({ navigation, route }) => {
         }
       }, [route.params.photos, photos]);
 
+      // 권한 허용 여부 창이 안 떠서 사용 못하는 중 
+      const _getLocPer = async () => {
+        try{
+            const {status} = await Location.requestForegroundPermissionsAsync();
+            if(status === "granted"){
+                setAllowLoc(true);
+            };
+        }catch (e) {
+            console.log(e);
+        };
+      };
 
     // 업체유형 드롭다운 
     const [open, setOpen] = useState(false);
@@ -120,7 +141,7 @@ const StoreBasicChange = ({ navigation, route }) => {
       {label: "양식", value: "양식"},
       {label: "기타", value: "기타"},
     ]); 
-    
+
     // 주소 팝업창
     const [isAddressModal, setIsAddressModal] = useState(false);
 
@@ -131,11 +152,17 @@ const StoreBasicChange = ({ navigation, route }) => {
 
     const didMountRef = useRef();
 
-    
+
     // 업체 사진 불러오기
     const _onPhotoPress = () => {
         navigation.navigate("MultipleImage", {type: "Store"});
     }
+
+    const _getLL = async(address) => {
+        Location.setGoogleApiKey("AIzaSyBPYCpA668yc46wX23TWIZpQQUj08AzWms");
+        let res =  await Location.geocodeAsync(address);
+        console.log(res); // 서버에 보낼 위도 경도
+    };
 
 
     //에러 메세지 설정 
@@ -198,14 +225,14 @@ const StoreBasicChange = ({ navigation, route }) => {
     };
 
     const _setOpenTime = time => {
-     
+
         let h = time.getHours();
         let m = time.getMinutes();
 
         if(h < 10){
           h = "0"+h;
         }
-        
+
         if(m< 10){
           m = "0"+m;
         }
@@ -225,11 +252,11 @@ const StoreBasicChange = ({ navigation, route }) => {
     const _setCloseTime = time => {
         let h = time.getHours();
         let m = time.getMinutes();
-        
+
         if(h < 10){
           h = "0"+h;
         }
-        
+
         if(m< 10){
           m = "0"+m;
         }
@@ -260,9 +287,11 @@ const StoreBasicChange = ({ navigation, route }) => {
             <KeyboardAwareScrollView
                 extraScrollHeight={20}
             >
+                {uploaded && disabled && <ErrorText>{errorMessage}</ErrorText>}
                 {/* 업체 기본정보 */}
                 <View style={{marginLeft: 10}}>
                     <DescTitle size={23}>업체 기본정보</DescTitle>
+               
                 </View>
                 <InfoContainer>
                     <ManageText 
@@ -283,7 +312,14 @@ const StoreBasicChange = ({ navigation, route }) => {
                                 editable={address === '' ? false : true}
                             />
                             <SmallButton title="검색" containerStyle={{width: '20%', marginLeft:10}}
-                                onPress={() => {setIsAddressModal(true); setAddress("");}}
+                                onPress={() => {
+                                    if(allowLoc){
+                                        setIsAddressModal(true); 
+                                        setAddress("");
+                                    }else {
+                                        Alert.alert("Location Permission Error","위치 정보를 허용해주세요.");
+                                    }
+                                    }}
                             />
                         </View>
                     <Modal visible={isAddressModal} transparent={true}>
@@ -293,14 +329,16 @@ const StoreBasicChange = ({ navigation, route }) => {
                                 style={{  width: 350, height: 450 }}
                                 jsOptions={{ animated: true, hideMapBtn: true }}
                                 onSelected={data => {
-                                setAddress(JSON.stringify(data.address).replace(/\"/g,''));
+                                let ad = JSON.stringify(data.address).replace(/\"/g,'');
+                                setAddress(ad);
                                 setIsAddressModal(false);
+                                _getLL(ad);
                                 }}
                             />
                         </View>
                     </Modal>
                     </RowItemContainer>
-                    
+
                     <RowItemContainer>
                         <DescTitle>영업시간</DescTitle>
                     <TimeContainer onPress={_handleOpenTimePress} >
@@ -321,15 +359,20 @@ const StoreBasicChange = ({ navigation, route }) => {
                         <DescTitle>업체 사진</DescTitle>
                         <SmallButton 
                             title="사진첨부" 
-                            containerStyle ={{width: '25%', marginTop: '3%'}}
+                            containerStyle ={{width: '30%', marginTop: '3%'}}
                             onPress={_onPhotoPress}
                         />
-                        
+
                     </RowItemContainer>
 
-                    <View style={{zIndex: 999}}>
+                    
                     <RowItemContainer>
                         <DescTitle>업체 유형</DescTitle>
+                        <View style={{height: HEIGHT*0.05}} />
+                    </RowItemContainer>
+              
+                </InfoContainer>
+                <TypeContainer>
                         <DropDownPicker 
                                 open={open}
                                 value={selectedType}
@@ -341,16 +384,10 @@ const StoreBasicChange = ({ navigation, route }) => {
                                 placeholder="업체 유형"
                                 placeholderStyle={{color: theme.label, fontSize: 16}}
                                 listMode="SCROLLVIEW"
+                                maxHeight={150}
                             />  
-                    </RowItemContainer>
-                    </View>
-                    
-                    
-                </InfoContainer>
-                <View style={{marginLeft: '5%'}}>
-                    {uploaded && disabled && <ErrorText>{errorMessage}</ErrorText>}
-                </View>
-                
+                </TypeContainer>
+                <View style={{height: 150}} />
             </KeyboardAwareScrollView>
         </Container>
 
@@ -376,4 +413,4 @@ const styles = StyleSheet.create({
       }
 });
 
-export default StoreBasicChange;
+export default StoreBasicChange; 

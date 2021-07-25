@@ -7,6 +7,7 @@ import {validateEmail,removeWhitespace} from "../utils/common";
 import {images} from "../images";
 import {UrlContext, ProgressContext, LoginConsumer, LoginContext} from "../contexts";
 import {Alert} from "react-native";
+import * as Location from "expo-location";
 
 const Container = styled.View`
     flex: 1;
@@ -186,11 +187,15 @@ const Login = ({navigation}) => {
                     onPress={async () => {
                         try{
                             spinner.start();
-                        const result = await handleApi();
+                            const result = await handleApi();
                         if (!result) {
                             alert("로그인 실패! 다시 입력해주세요.");
                         }else {
                             setSuccess(true);
+                            const {status} = await Location.requestBackgroundPermissionsAsync();
+                            if (status === "granted"){
+                                setAllow(true);
+                            }
                         }
                     }catch(e){
                         Alert.alert("Login Error", e.message);

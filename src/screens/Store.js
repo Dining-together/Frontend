@@ -7,6 +7,7 @@ import { ThemeContext } from "styled-components";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {StoreList} from "../utils/data";
 import * as Location from "expo-location";
+import {LoginContext} from "../contexts";
 
 const HEIGHT = Dimensions.get("screen").width;
 
@@ -151,14 +152,20 @@ const Item = ({item: {url, id, name, ment, distance, score}, onPress, onStarPres
     );
 };
 
-const Store = ({navigation}) => {
+const Store = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
+    const {allow} = useContext(LoginContext);
 
     const [sort,setSort] = useState(0);
     const [isStar, setIsStar] = useState(false);
     const [loc, setLoc] = useState(null);
     const [lati, setLati] = useState(0);
     const [longi, setLongi] = useState(0);
+    const {menu} = route.params;
+
+    useEffect(()=> {
+        // data 정렬 
+    }, [sort, menu]);
 
     const _onStorePress = item => {
         navigation.navigate('StoreDetailStack', { id: item.id, name: item.storeName });
@@ -166,32 +173,24 @@ const Store = ({navigation}) => {
     const _onStarPress = () => {setIsStar(!isStar);}
 
     const getLocation = async () => {
-        let {status} = await Location.requestForegroundPermissionsAsync();
-        if (status=="granted") {
             let location = await Location.getCurrentPositionAsync({}); 
             setLoc(location);
             setLati(location.coords.latitude);
             setLongi(location.coords.longitude);
-            console.log(location.coords);
-        }
         return loc;
     };
-
-    useEffect(() => {
-        getLocation();
-    }, []);
 
     return (
         <Container>
             <ButtonsContainer>
                 <ButtonBox onPress={() => setSort(1)} checked={sort===1}>
-                    <ButtonText>정렬기준1</ButtonText>
+                    <ButtonText>거리순</ButtonText>
                 </ButtonBox>
                 <ButtonBox onPress={() => setSort(2)} checked={sort===2}>
-                    <ButtonText>정렬기준2</ButtonText>
+                    <ButtonText>별점순</ButtonText>
                 </ButtonBox>
                 <ButtonBox onPress={() => setSort(3)} checked={sort===3}>
-                    <ButtonText>정렬기준3</ButtonText>
+                    <ButtonText>리뷰순</ButtonText>
                 </ButtonBox>
             </ButtonsContainer>
             
@@ -215,11 +214,15 @@ const Store = ({navigation}) => {
             <MapButton 
             onPress={async ()=> {
                 try {
-                    const res = await getLocation();
-                    console.log(res)
-                    navigation.navigate("StoreMap", {longi: longi, lati: lati});
+                    if(allow) {
+                        const res = await getLocation();
+                        console.log(res)
+                        navigation.navigate("StoreMap", {longi: longi, lati: lati});
+                    }else{
+                        Alert.alert("Location Permission Error","위치 정보를 허용해주세요.");
+                    }
                 }catch(e) {
-                    Alert.alert("Location Error", e.message);
+                    Alert.alert("Error", e.message);
                 }
             }}>
                 <MapText>지도로 보기</MapText>

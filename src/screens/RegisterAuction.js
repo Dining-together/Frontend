@@ -5,10 +5,11 @@ import {DateTimePicker,  RadioButton} from "../components";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {removeWhitespace} from "../utils/common";
 import DropDownPicker from "react-native-dropdown-picker";
-import {Dimensions} from "react-native";
+import {Dimensions, Alert} from "react-native";
 import { theme } from '../theme';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from "expo-location";
+import {LoginContext} from "../contexts";
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
@@ -158,6 +159,7 @@ border-width: 1px;
 
 
 const RegisterAuction = ({navigation}) => {
+  const {allow} = useContext(LoginContext);
   //각 변수들에 대한 state 
     const [title, setTitle] = useState("");
     const [book, setBook] = useState(''); //String ver.
@@ -218,12 +220,11 @@ const [selectedLocation, setSelectedLocation] = useState(null);
 
     //현재 위치 
     const getLocation = async () => {
-      let {status} = await Location.requestForegroundPermissionsAsync();
-      if (status=="granted") {
+        if(allow){
           let location = await Location.getCurrentPositionAsync({}); 
           setLati(location.coords.latitude);
           setLongi(location.coords.longitude);
-      }
+        }
       return loc;
   };
 
@@ -762,11 +763,17 @@ const [selectedLocation, setSelectedLocation] = useState(null);
       onPress={() => {setSelectedLocation(region); getGeocodeAsync(region);}}
     />
 </MapView>
-<CurrentButton onPress= {()=> setRegion({
-             longitude: longi,
-             latitude: lati,
-             latitudeDelta: 0.01,
-             longitudeDelta: 0.01, })}>
+<CurrentButton onPress= {()=> {
+  if(allow) {
+    setRegion({
+      longitude: longi,
+      latitude: lati,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01, })
+  }else {
+    Alert.alert("Location Permission Error","위치 정보를 허용해주세요.");
+  }
+}}>
 <MaterialCommunityIcons name="map-marker" size={30} color="black"/>
 </CurrentButton>
 </MapContainer>
