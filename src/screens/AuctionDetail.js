@@ -164,6 +164,7 @@ const AuctionDetail = ({ navigation, route}) => {
             setContent(data.content);
             setGruopCnt(data.groupCnt);
             setAddr(data.addr);
+            setBidstoreList(data.auctioneers);
 
         }catch(error) {
             console.error(error);
@@ -172,32 +173,6 @@ const AuctionDetail = ({ navigation, route}) => {
         }
     };
 
-    // 참여 업체 리스트 조회
-    const getApi = async() => {
-        let fixedUrl = aurl+"/auction/"+`${AuctionId}`+"/auctioneers";
-
-        let options = {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-AUTH-TOKEN' : token,
-            },
-        };
-
-        try {
-            spinner.start();
-            let response = await fetch(fixedUrl, options);
-            let res = await response.json();
-
-            setBidstoreList(res.list);
-
-        }catch(error) {
-            console.error(error);
-        }finally {
-            spinner.stop();
-        }
-    };
 
     const changeDateData = (date) =>{
         var y = date.slice(0,4);
@@ -270,7 +245,6 @@ const AuctionDetail = ({ navigation, route}) => {
 
     useEffect(()=> {
         handleApi();
-        getApi();
     },[]);
 
     return (
@@ -342,7 +316,7 @@ const AuctionDetail = ({ navigation, route}) => {
                         <TouchableOpacity style={styles.row} key={item.auctioneerId}
                             onPress={() => {
                                 if(isUser){
-                                    navigation.navigate("BidDetail", {id: item.id})
+                                    navigation.navigate("BidDetail", {id: item.storeId})
                                 }
                             }}>
                             <Store><Desc>{item.storeName}</Desc></Store>
