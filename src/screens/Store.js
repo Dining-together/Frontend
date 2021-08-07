@@ -1,11 +1,8 @@
 import React, {useState, useEffect, useContext} from 'react';
 import styled from "styled-components/native";
 import {Text, Dimensions, FlatList, View, ScrollView, Alert} from "react-native";
-import { IconButton } from "../components";
-import { images } from '../images';
 import { ThemeContext } from "styled-components";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {StoreList} from "../utils/data";
 import * as Location from "expo-location";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 
@@ -124,6 +121,8 @@ const MapText = styled.Text`
 
 const Item = ({item: {id, name, storeImages, storeType}, onPress, onStarPress, isStar, theme}) => {
 
+    const {mode} = useContext(LoginContext);
+
     return (
         <ItemContainer onPress={onPress} >
             {/* <StyledImage source={{uri: url}}/> */}
@@ -133,6 +132,7 @@ const Item = ({item: {id, name, storeImages, storeType}, onPress, onStarPress, i
                 <ContentText>메세지</ContentText>
                 <ContentText>0M</ContentText>
             </ContentContainter>
+            {mode ==="CUSTOMER" && 
             <StarBox>
                 {isStar ?
                             (
@@ -143,7 +143,7 @@ const Item = ({item: {id, name, storeImages, storeType}, onPress, onStarPress, i
                                 <MaterialCommunityIcons name="star-outline" size={40} onPress={onStarPress} color="yellow"
                                     style={{ marginLeft: 15, marginBottom: 5, opacity: 0.7 }} />
                             )}
-                </StarBox>
+            </StarBox> }
             <ScoreBox>
                 <MaterialCommunityIcons name="star" size={15} color={theme.background}/>
                 <ScoreText>5</ScoreText>

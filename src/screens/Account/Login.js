@@ -94,7 +94,7 @@ const ButtonText = styled.Text`
 const Login = ({navigation}) => {
     const {spinner} = useContext(ProgressContext);
     const {url} = useContext(UrlContext);
-    const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setDoc} = useContext(LoginContext);
+    const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setDoc, setId} = useContext(LoginContext);
     const [userId, setUserId] = useState("");
     const [password, setPassword] = useState("");
     const [disabled, setDisabled] = useState(true);
@@ -152,6 +152,7 @@ const Login = ({navigation}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
             setMode(res["type"]);
+            setId(res["id"]);
             return res["type"];
         }catch(error) {
             console.error(error);
