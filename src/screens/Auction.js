@@ -72,7 +72,11 @@ const ButtonContainer = styled.TouchableOpacity`
     align-items: center;
     `;
 
-const Item = React.memo(({item: {auctionId, auctioneers, content, createdDate, deadline, maxPrice, minPrice, reservation, status, storeType, title, updatedDate, userName, groupType, groupCnt, addr, age, gender}, onPress, onStarPress, isStar}) => {
+const Item = React.memo(({item: {auctionId, auctioneers, content, createdDate, deadline, maxPrice, minPrice, reservation, status, storeType, 
+    title, updatedDate, userName, groupType, groupCnt, addr, age, gender}, onPress, onStarPress, isStar}) => {
+
+        const {mode} = useContext(LoginContext);
+
     return (
         <ItemContainer onPress={() => onPress(auctionId)} >
             <TimeTextContiner>
@@ -81,6 +85,7 @@ const Item = React.memo(({item: {auctionId, auctioneers, content, createdDate, d
             </TimeTextContiner>
             <ItemBox>
                 <ContentTitleText>{title}</ContentTitleText>
+                { mode === 'STORE' &&
                 <StarBox>
                 {isStar ?
                             (
@@ -91,7 +96,7 @@ const Item = React.memo(({item: {auctionId, auctioneers, content, createdDate, d
                                 <MaterialCommunityIcons name="star-outline" size={40} onPress={onStarPress} color="yellow"
                                     style={{ marginLeft: 15, marginBottom: 5, opacity: 0.7 }} />
                             )}
-                </StarBox>
+                </StarBox>}
                 <ContentText>단체 유형: {groupType} ({groupCnt}명)</ContentText>
                 <ContentText>선호 지역: {addr}</ContentText>
                 <ContentText>선호 메뉴: {changeListData(storeType)}</ContentText>
@@ -137,6 +142,7 @@ const Auction = ({navigation}) => {
     const [open3, setOpen3] = useState(false);
     const [selected3, setSelected3] = useState(null);
     const [list3, setList3] = useState([
+        {label: "전체", value: "전체"},
         {label: "서울특별시", value: "서울특별시"},
         {label: "인천광역시", value: "인천광역시"},
         {label: "대전광역시", value: "대전광역시"},
@@ -249,13 +255,13 @@ const Auction = ({navigation}) => {
             list = _filterSelected2(list, selected2);
         }
 
-        if (selected3 !== null){
+        if (selected3 !== null && selected3!=="전체"){
             let l = selectsigungoo(selected3);
             let stateList = setRegionList(l, l.length);
             setList4(stateList);
             list = _filterSelected3(list, selected3);
         }
-        if (selected4 !== null) {
+        if (selected4 !== null && selected4!=="전체") {
             list = _filterSelected3(list, selected4);
         }
         setAuctionListData(list);
@@ -370,8 +376,8 @@ const Auction = ({navigation}) => {
                 setOpen2(false);
                 setOpen3(false);
                 setOpen4(false);
-                setList4([{label: "시군구 선택", value: "시군구 선택"}])
-                handleApi()
+                setList4([{label: "시군구 선택", value: "시군구 선택"}]);
+                handleApi();
                 }} color={theme.titleColor}/>
         </ButtonContainer>
         {isLoading && <Spinner />}

@@ -225,6 +225,7 @@ const AuctionDetail = ({ navigation, route}) => {
     };
 
 
+
     useEffect(()=> {
         handleApi();
     },[]);
@@ -240,6 +241,8 @@ const AuctionDetail = ({ navigation, route}) => {
                     <View style={styles.name}>
                         <TitleBox>
                         <Title>{title}</Title>
+                        { mode === 'STORE' &&
+                        <>
                         {isStar ?
                             (
                                 <MaterialCommunityIcons name="star" size={40} onPress={_onStarPress} color="yellow"
@@ -249,6 +252,7 @@ const AuctionDetail = ({ navigation, route}) => {
                                 <MaterialCommunityIcons name="star-outline" size={40} onPress={_onStarPress} color="yellow"
                                     style={{ position: "absolute", right: '5%', opacity: 0.7 }} />
                         )}
+                        </>}
                         </TitleBox>
                     </View>
                         <TextBox>
@@ -306,7 +310,7 @@ const AuctionDetail = ({ navigation, route}) => {
                 </InfoContainer>
 
                 {/* Store만 ButtonContainer가 보이도록 구현 필요 이미 참여했으면 수정으로 바꾸기..? */}
-                {!(status==="PROCEEDING") && (mode==="STORE") &&
+                {(status==="PROCEEDING") && (mode==="STORE") &&
                  (<ButtonContainer>
                  <Button
                      title="참여"
