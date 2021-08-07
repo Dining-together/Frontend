@@ -4,7 +4,6 @@ import { Text, View, StyleSheet, Dimensions, TouchableOpacity} from "react-nativ
 import { Button } from '../components';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { BidstoreList } from '../utils/data';
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 
 const WIDTH = Dimensions.get("screen").width;
@@ -105,7 +104,7 @@ const AuctionDetail = ({ navigation, route}) => {
     const [isUser, setIsUser] = useState(route.params.isUser); // 자신의 공고 확인일 경우 true
 
     const AuctionId = route.params.id;
-    const {token, mode}  = useContext(LoginContext);
+    const {token, mode, id}  = useContext(LoginContext);
     const {spinner}  = useContext(ProgressContext);
     const {aurl}  = useContext(UrlContext);
     const [title, setTitle] = useState("");
@@ -120,6 +119,8 @@ const AuctionDetail = ({ navigation, route}) => {
     const [content, setContent] = useState("");
     const [addr, setAddr] = useState("");
     const [groupCnt, setGruopCnt] = useState(0);
+
+    const [bidstoreList, setBidstoreList] = useState([]);
 
     const _onMessagePress = () => { navigation.navigate("Message" , {name: "닉네임"+AuctionId}) };
 
@@ -150,6 +151,7 @@ const AuctionDetail = ({ navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
             let data = res.data;
+
             setTitle(data.title);
             setUserName(data.userName);
             setUserType(data.groupType);
@@ -162,6 +164,34 @@ const AuctionDetail = ({ navigation, route}) => {
             setContent(data.content);
             setGruopCnt(data.groupCnt);
             setAddr(data.addr);
+
+        }catch(error) {
+            console.error(error);
+        }finally {
+            spinner.stop();
+        }
+    };
+
+    // 참여 업체 리스트 조회
+    const getApi = async() => {
+        let fixedUrl = aurl+"/auction/"+`${AuctionId}`+"/auctioneers";
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+        };
+
+        try {
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+
+            setBidstoreList(res.list);
+
         }catch(error) {
             console.error(error);
         }finally {
@@ -224,10 +254,23 @@ const AuctionDetail = ({ navigation, route}) => {
         return res;
     };
 
+    
+    // 입찰 참여 버튼
+    const _bidButtonPress = () => {
+        const list = bidstoreList.map(item => item.storeId);
+        if(list.includes(id)){
+            alert("이미 입찰 참여한 공고입니다.");
+        }
+        else{
+            navigation.navigate("AuctionBid", {AuctionId: AuctionId});
+        }
+        
+    }
 
 
     useEffect(()=> {
         handleApi();
+        getApi();
     },[]);
 
     return (
@@ -295,14 +338,14 @@ const AuctionDetail = ({ navigation, route}) => {
                         <DescTitle size={20} >입찰현황</DescTitle>
                     </RowItemContainer>
 
-                    {BidstoreList.map(item => (
-                        <TouchableOpacity style={styles.row} key={item.id}
+                    {bidstoreList.map(item => (
+                        <TouchableOpacity style={styles.row} key={item.auctioneerId}
                             onPress={() => {
                                 if(isUser){
                                     navigation.navigate("BidDetail", {id: item.id})
                                 }
                             }}>
-                            <Store><Desc>{item.name}</Desc></Store>
+                            <Store><Desc>{item.storeName}</Desc></Store>
                             <Store><Desc>{item.menu}</Desc></Store>
                             <Store><Desc>{item.price}원</Desc></Store>
                         </TouchableOpacity>
@@ -315,9 +358,7 @@ const AuctionDetail = ({ navigation, route}) => {
                  <Button
                      title="참여"
                      containerStyle={{ width: '100%' }}
-                     onPress={() => {
-                         navigation.navigate("AuctionBid");
-                     }}
+                     onPress={_bidButtonPress}
                  />
              </ButtonContainer>)
                 }
