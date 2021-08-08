@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { Alert } from 'react-native';
+import { Modal, View, StyleSheet,TouchableOpacity, Alert } from 'react-native';
 import styled from "styled-components/native";
 import { Input,Button, RadioButton } from '../../components';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { validateEmail, removeWhitespace, validatePassword } from '../../utils/common';
-import { __asyncGenerator } from 'tslib';
-import {ProgressContext, UrlContext} from "../../contexts";
-
+import {ProgressContext, UrlContext, LoginContext} from "../../contexts";
+import Postcode from '@actbase/react-daum-postcode';
+import * as Location from "expo-location";
 
 const Container = styled.View`
     flex: 1;
@@ -61,6 +61,7 @@ const Signup = ({ navigation, route }) => {
 
     const {spinner} = useContext(ProgressContext);
     const {url} = useContext(UrlContext);
+    const {allow, setAllow} = useContext(LoginContext);
 
     //별명, 업체명
     const [userId, setuserId] = useState('');
@@ -98,6 +99,14 @@ const Signup = ({ navigation, route }) => {
     //이메일 인증 전송<>확인
     const [isConfirmedSend, setIsConfirmSend] = useState(false);
 
+    //주소
+    const [addr, setAddr] = useState("");
+    const [lat, setLat] = useState(null);
+    const [lon, setLon] = useState(null);
+    const [allowLoc, setAllowLoc] = useState(allow);
+    const [isAddressModal, setIsAddressModal] = useState(false);
+    const [isChanging, setIsChanging] = useState(false);
+
     const userIdRef =useRef();
     const emailConfirmRef = useRef();
     const passwordRef = useRef();
@@ -106,6 +115,29 @@ const Signup = ({ navigation, route }) => {
     const ageRef = useRef();
     const emailMountRef = useRef();
      
+    const _getLocPer = async () => {
+        try{
+            const {status} = await Location.requestForegroundPermissionsAsync();
+            if(status === "granted"){
+                setAllow(true);
+                setAllowLoc(true);
+            };
+        }catch (e) {
+            console.log(e);
+        };
+      };
+
+      const _getLL = async(address) => {
+        Location.setGoogleApiKey("AIzaSyBPYCpA668yc46wX23TWIZpQQUj08AzWms");
+        let res =  await Location.geocodeAsync(address);
+        setLat(res[0].latitude);
+        setLon(res[0].longitude);
+        setIsChanging(false);
+    };
+
+    useEffect(() => {
+        _getLocPer();
+    },[]);  
 
     useEffect(() => {
 
@@ -132,14 +164,17 @@ const Signup = ({ navigation, route }) => {
                 _errorMessage = "비밀번호를 확인하세요.";
             }
             else if(route.params.mode === "User"){
-                if(!gender){
-                    _errorMessage = "성별을 입력하세요.";
+                if (!removeWhitespace(userId)){
+                    _errorMessage = "닉네임을 입력하세요.";
                 }
                 if(!age){
                     _errorMessage = "나이를 입력하세요.";
                 }
-                if (!removeWhitespace(userId)){
-                    _errorMessage = "닉네임을 입력하세요.";
+                if(!addr){
+                    _errorMessage = "주소를 입력하세요.";
+                }
+                if(!gender){
+                    _errorMessage = "성별을 입력하세요.";
                 }
             }else if (route.params.mode === "Store") {
                 if (!removeWhitespace(userId)){
@@ -154,7 +189,7 @@ const Signup = ({ navigation, route }) => {
             didMountRef.current = true;
             }
         
-    }, [email, password, passwordConfirm, userId, emailConfirmPress,gender,age,emailCodePress]);
+    }, [email, password, passwordConfirm, userId, emailConfirmPress,gender,age,emailCodePress, addr]);
 
     useEffect(() => {
         
@@ -193,14 +228,14 @@ const Signup = ({ navigation, route }) => {
 
         useEffect(() => {
             setDisabled(            
-                !(userId && email && password && passwordConfirm && !errorMessage &&isEmailValidated && !emailErrorMessage)
+                !(userId && email && password && passwordConfirm && !errorMessage &&isEmailValidated && !emailErrorMessage && !isChanging)
             );
             if(route.params.mode==="User"){
                 if(!gender){
                     setDisabled(true);
                 }
             }
-        }, [userId, email, password, passwordConfirm, errorMessage, isEmailValidated, gender,age, emailErrorMessage]);
+        }, [userId, email, password, passwordConfirm, errorMessage, isEmailValidated, gender,age, emailErrorMessage, isChanging]);
         
         // 이메일 중복확인 
         const _handleEmailButtonPress = async() => {
@@ -346,6 +381,9 @@ const Signup = ({ navigation, route }) => {
                     name : userId,
                     password : password,
                     userType: "CUSTOMER",
+                    latitude: lat,
+                    longitude: lon,
+                    addr: addr,
                 }
             }
             else if(route.params.mode === 'Store'){
@@ -486,6 +524,41 @@ const Signup = ({ navigation, route }) => {
                     returnKeyType="done"
                     keyboardType="number-pad"
                 />
+                <Input 
+                label="주소"
+                value={addr}
+                placeholder="주소를 입력하세요"
+                onChangeText={text => setAddr(text)}
+                editable={addr===""? false: true}
+                returnKeyType="done"
+                hasButton
+                buttonTitle="검색"
+                onPress={() => { 
+                    if(allowLoc){
+                        setIsAddressModal(true); 
+                        setAddr("");
+                    }else {
+                        Alert.alert("Location Permission Error","위치 정보를 허용해주세요.");
+                    }
+                    }}
+                completed={addr!==""? true : false}
+                />
+                <Modal visible={isAddressModal} transparent={true}>
+                        <TouchableOpacity style={styles.background} onPress={() => setIsAddressModal(false)}/>
+                        <View style={styles.modal}>
+                            <Postcode
+                                style={{  width: 350, height: 450 }}
+                                jsOptions={{ animated: true, hideMapBtn: true }}
+                                onSelected={data => {
+                                let ad = JSON.stringify(data.address).replace(/\"/g,'');
+                                setAddr(ad);
+                                setIsAddressModal(false);
+                                setIsChanging(true);
+                                _getLL(ad);
+                                }}
+                            />
+                        </View>
+                    </Modal>
                 <RadioTitle>성별</RadioTitle>
                 <RadioView>
                         <RadioButton
@@ -517,5 +590,21 @@ const Signup = ({ navigation, route }) => {
         </KeyboardAwareScrollView>
     );
 };
+
+const styles = StyleSheet.create({
+    modal: {
+        marginHorizontal: 20,
+        borderRadius: 3,
+        alignItems: 'center',
+        marginTop: '25%',
+        backgroundColor: 'white',
+      },
+      background: {
+        position: 'absolute',
+        height: '100%',
+        width: '100%',
+        backgroundColor: 'rgba(0,0,0,0.5)'
+      },
+});
 
 export default Signup;

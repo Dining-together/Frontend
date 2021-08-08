@@ -114,3 +114,21 @@ export const changeCreatedDateData = now => {
 
     return res;
 };
+
+export const _changeType = (type) => {
+    let text;
+
+    switch(type){
+        case "KrStore":
+            text = "KOREAN"; break;
+        case "ChStore":
+            text = "CHINESE"; break;
+        case "JpStore":
+            text = "JAPANESE"; break;
+        case "WsStore":
+            text = "WESTERN"; break;
+        case "EtcStore":
+            text = "기타"; break;
+    }
+    return text;
+}

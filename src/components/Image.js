@@ -37,15 +37,15 @@ const Image = ({ title, url, onChangeImage, showImage, containerStyle }) => {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [3, 4],
+        aspect: [4, 3],
         quality: 1,
       });
 
       if (!result.cancelled) {
         onChangeImage(result.uri);
+        setUploaded(true);
       }
 
-      setUploaded(true);
 
     } catch (e) {
       Alert.alert('사진 오류', e.message);

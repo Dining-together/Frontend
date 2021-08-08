@@ -1,13 +1,13 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import styled from "styled-components/native";
 import {MypageButton, ProfileImage, SmallButton} from "../../components";
-import {LoginContext} from "../../contexts";
+import {LoginContext, UrlContext, ProgressContext} from "../../contexts";
 import {Alert} from "react-native";
 
 const Container = styled.View`
     background-color: ${({theme})=> theme.background};
     flex: 1;
-    padding: 0 50px;
+    padding: 0 10%;
 `;
 
 const IconContainer = styled.View`
@@ -24,11 +24,12 @@ const InfoContainer = styled.View`
 `;
 
 const ProfileContainer = styled.View`
+    width: 100%;
     flex-direction: row;
     align-self: flex-start;
     background-color: ${({theme})=> theme.background};
-    align-items:center;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 30px;
 `;
 
@@ -38,20 +39,52 @@ const ProfileButton = styled.TouchableOpacity`
     
 `
 const Username = styled.Text`
-    font-size: 25px;
+    font-size: 23px;
     margin-left: 40px;
     font-weight: bold;
 `;
 
 const LogoutContainer = styled.View`
+width: 100%;
     align-items: flex-end;
     justify-content: flex-start;
     margin-right: 20px;
 `;
 
-const Mypage_User = ( {navigation} ) => {
-    const {setSuccess} = useContext(LoginContext);
 
+const Mypage_User = ( {navigation} ) => {
+    const {token, setSuccess} = useContext(LoginContext);
+    const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const [name, setName] = useState("");
+    
+    useEffect(()=>{
+        handleApi();
+    },[])
+
+    const handleApi = async () => {
+    let fixedUrl = url+"/member/customer";
+
+    let options = {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-AUTH-TOKEN' : token
+        },
+    };
+
+    try {
+        spinner.start();
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        setName(res.data.name);
+    }catch (error) {
+        console.error(error);
+      } finally {
+        spinner.stop();
+      }
+    };
 
     return (
         <Container>
@@ -66,7 +99,7 @@ const Mypage_User = ( {navigation} ) => {
                 <ProfileButton onPress={() => {
                     navigation.navigate("UserInfo");
                 }}>
-                    <Username>사용자 이름</Username>
+                    <Username style={{color: name===""? "white" : "black"}}>{name}</Username>
                 </ProfileButton>
                 </ProfileContainer>
                 <LogoutContainer>

@@ -110,6 +110,8 @@ const StoreBasicChange = ({ navigation, route }) => {
     const [closeT, setCloseT] = useState(route.params.closeT);
     const [lat, setLat] = useState(route.params.lat);
     const [lon, setLon] = useState(route.params.lon);
+    const [isChanging, setIsChanging] = useState(false);
+    const [changed, setChanged] = useState(false);
 
     const [opening, setOpening] = useState('');
     const [closing, setClosing] = useState('');
@@ -121,7 +123,6 @@ const StoreBasicChange = ({ navigation, route }) => {
     useEffect(() => {
         if (route.params.photos) {
             setPhotos(route.params.photos);
-            console.log(route.params.photos);
         }
       }, [route.params.photos, photos]);
 
@@ -137,10 +138,17 @@ const StoreBasicChange = ({ navigation, route }) => {
         };
       };
 
+      useEffect(() => {
+        setIsChanging(false);
+      },[changed]);
+
     //위치 권한확인 
     useEffect(() => {
-        _getLocPer();
-    })
+        if(!allow){
+            _getLocPer();
+        }
+    },[]);
+
 
     // 업체유형 드롭다운 
     const [open, setOpen] = useState(false);
@@ -173,9 +181,9 @@ const StoreBasicChange = ({ navigation, route }) => {
     const _getLL = async(address) => {
         Location.setGoogleApiKey("AIzaSyBPYCpA668yc46wX23TWIZpQQUj08AzWms");
         let res =  await Location.geocodeAsync(address);
-        console.log(res); // 서버에 보낼 위도 경도
-        setLat(res.latitude);
-        setLon(res.longitude);
+        setLat(res[0].latitude);
+        setLon(res[0].longitude);
+        setChanged(!changed);
     };
 
 
@@ -196,7 +204,6 @@ const StoreBasicChange = ({ navigation, route }) => {
             } else if(!closeTime) {
                 _errorMessage = "마감시간을 입력하세요.";
             } else if(parseInt(closing)<parseInt(opening)){
-                console.log(opening, closing);
                 _errorMessage = "마감 시간을 오픈시간 이후으로 설정해주세요."
               }
             else {
@@ -212,8 +219,8 @@ const StoreBasicChange = ({ navigation, route }) => {
 
     // 등록 버튼 활성화
     useEffect(() => {
-        setDisabled(!(phoneNumber && address && selectedType && photos && openTime && closeTime &&!errorMessage));
-    }, [phoneNumber, address, selectedType, photos, openTime, closeTime, errorMessage]);
+        setDisabled(!(phoneNumber && address && selectedType && photos && openTime && closeTime &&!errorMessage && !isChanging));
+    }, [phoneNumber, address, selectedType, photos, openTime, closeTime, errorMessage, lat, lon, isChanging]);
 
     // 시간 유효성 검사 위해서 변환
     useEffect(()=> {
@@ -229,11 +236,11 @@ const StoreBasicChange = ({ navigation, route }) => {
             headerRight: () => (
                 disabled ? (<MaterialCommunityIcons name="check" size={35} onPress={_onBasicPress}
                     style={{ marginRight: 10, marginBottom: 3, opacity: 0.3 }} />)
-                    : (<MaterialCommunityIcons name="check" size={35} onPress={_onBasicPress}
+                    : (<MaterialCommunityIcons name="check" size={35} onPress={() => _onBasicPress()}
                         style={{ marginRight: 10, marginBottom: 3, opacity: 1 }} />)
             )
         });
-    }, [disabled]);
+    }, [disabled, isChanging, lat, lon]);
 
     // 오픈시간
     const _handleOpenTimePress =() => {
@@ -318,8 +325,6 @@ const StoreBasicChange = ({ navigation, route }) => {
     // 기본정보 post
     const postApi = async (url) => {
 
-        console.log(url);
-
         let options = {
             method: 'POST',
             headers: {
@@ -341,7 +346,6 @@ const StoreBasicChange = ({ navigation, route }) => {
         try {
             let response = await fetch(url,options);
             let res = await response.json();
-            console.log(res);
 
             return res["success"];
 
@@ -361,7 +365,6 @@ const StoreBasicChange = ({ navigation, route }) => {
             formData.append("files", {uri: photo.uri, name: photo.name, type: photo.type});
         }
 
-        console.log(formData);
 
         let options = {
             method: 'POST',
@@ -376,7 +379,6 @@ const StoreBasicChange = ({ navigation, route }) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
     
-            console.log(res);
             return res["success"];
             
             } catch (error) {
@@ -407,6 +409,7 @@ const StoreBasicChange = ({ navigation, route }) => {
                     />
                     <RowItemContainer>
                         <DescTitle>위치</DescTitle>
+                        {address==="" ? null : (<DescTitle size={12} style={{color: "blue", marginTop: 5}}>상세 주소를 추가 입력해주세요.</DescTitle>)}
                         <View style={styles.row}>
                             <StyledTextInput
                                 width={80}
@@ -416,7 +419,7 @@ const StoreBasicChange = ({ navigation, route }) => {
                                 editable={address === '' ? false : true}
                                 onChangeText={text => setAddress(text)}
                             />
-                            <SmallButton title="검색" containerStyle={{width: '20%', marginLeft:10}}
+                            <SmallButton title="검색" containerStyle={{width: '20%', marginLeft:10, height: 50, marginTop: 10}}
                                 onPress={() => {
                                     
                                     if(allowLoc){
@@ -438,6 +441,7 @@ const StoreBasicChange = ({ navigation, route }) => {
                                 let ad = JSON.stringify(data.address).replace(/\"/g,'');
                                 setAddress(ad);
                                 setIsAddressModal(false);
+                                setIsChanging(true);
                                 _getLL(ad);
                                 }}
                             />
@@ -448,13 +452,13 @@ const StoreBasicChange = ({ navigation, route }) => {
                     <RowItemContainer>
                         <DescTitle>영업시간</DescTitle>
                     <TimeContainer onPress={_handleOpenTimePress} >
-                        <ButtonTitle>{openTime ? openTime :"오픈시간을 입력하세요."}</ButtonTitle>
+                        <ButtonTitle>{openTime!=="Invalid date시 Invalid date분" ? openTime :"오픈시간을 입력하세요."}</ButtonTitle>
                     </TimeContainer>
                         <DateTimePicker visible={openTimeVisible} mode="time" 
                             handleConfirm={_setOpenTime} handleCancel={_hideOpenTimePicker}/>
 
                         <TimeContainer onPress={_handleCloseTimePress} >
-                        <ButtonTitle>{closeTime ? closeTime :"마감시간을 입력하세요."}</ButtonTitle>
+                        <ButtonTitle>{closeTime!=="Invalid date시 Invalid date분" ? closeTime :"마감시간을 입력하세요."}</ButtonTitle>
                     </TimeContainer>
                         <DateTimePicker visible={closeTimeVisible} mode="time" 
                             handleConfirm={_setCloseTime} handleCancel={_hideCloseTimePicker}/>
@@ -463,10 +467,12 @@ const StoreBasicChange = ({ navigation, route }) => {
 
                     <RowItemContainer>
                         <DescTitle>업체 사진</DescTitle>
+                        {!photos ? null : (<DescTitle size={12} style={{color: "blue", marginTop: 5}}>{photos.length}개의 사진이 첨부되었습니다.</DescTitle>)}
                         <SmallButton 
                             title="사진첨부" 
                             containerStyle ={{width: '30%', marginTop: '3%'}}
                             onPress={_onPhotoPress}
+                            uploaded={!photos ? false : true} 
                         />
 
                     </RowItemContainer>
@@ -494,7 +500,6 @@ const StoreBasicChange = ({ navigation, route }) => {
                             />  
                 </TypeContainer>
                 <View style={{height: 150}} />
-                
             </KeyboardAwareScrollView>
         </Container>
 

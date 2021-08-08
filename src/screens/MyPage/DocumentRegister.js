@@ -11,16 +11,16 @@ const HEIGHT = Dimensions.get("screen").height;
 const Container = styled.View`
     background-color: ${({ theme }) => theme.background};
     flex: 1;
-    padding: 6%;
+    padding: 5%;
 `
 const DocumentImage = styled.Image`
     margin-top: 3%;
-    width: ${WIDTH*0.4}px;
+    width: ${WIDTH*0.9}px;
     height: ${HEIGHT*0.3}px;
 `;
 
 
-const DocumentRegister = () => {
+const DocumentRegister = ({navigation}) => {
 
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
@@ -67,11 +67,17 @@ const DocumentRegister = () => {
     const _documentButtonPress = async() => {
         try{
             spinner.start();
+            
+            if(!document){
+                alert("서류가 첨부되지 않았습니다.");
+                return;
+            }
 
             const result = await postApi();
             if(result){
                 alert("서류 등록 되었습니다.")
                 setDoc(true);
+                navigation.pop();
             }
             else{
                 alert("서류 등록을 다시 시도해주세요.");

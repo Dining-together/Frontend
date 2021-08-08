@@ -167,6 +167,7 @@ const RegisterAuction = ({navigation}) => {
   const {allow, token} = useContext(LoginContext);
   const {aurl} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
+  const [allowLoc, setAllowLoc] = useState(allow);
 
   //각 변수들에 대한 state 
     const [title, setTitle] = useState("");
@@ -238,6 +239,18 @@ const RegisterAuction = ({navigation}) => {
 });
 const [selectedLocation, setSelectedLocation] = useState(null);
 
+const _getLocPer = async () => {
+  try{
+      const {status} = await Location.requestForegroundPermissionsAsync();
+      if(status === "granted"){
+          setAllow(true);
+          setAllowLoc(true);
+      };
+  }catch (e) {
+      console.log(e);
+  };
+};
+
     //현재 위치 
     const getLocation = async () => {
         if(allow){
@@ -288,8 +301,12 @@ const [selectedLocation, setSelectedLocation] = useState(null);
   };
 
   useEffect(() => {
-    const result = getLocation();
-  }, []);
+    if(!allowLoc){
+      _getLocPer();
+    }else {
+      const result = getLocation();
+    }
+  }, [allowLoc]);
 
   const handleApi = async () => {
     let fixedUrl = aurl+"/auction";

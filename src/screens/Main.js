@@ -12,6 +12,11 @@ import {cutDateData, changeListData, createdDate, changeCreatedDateData} from ".
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
 
+const BackCon = styled.View`
+    flex: 1;
+    background-color: ${({ theme }) => theme.background};
+`;
+
 const Header = styled.View`
     height: ${HEIGHT*0.1};
     background-color: ${({ theme }) => theme.titleColor}; 
@@ -206,8 +211,8 @@ const Store = ({ item: { id, storeName, score, reviews, foodType, src }, onPress
 
 const Main = ({ navigation }) => {
     const theme = useContext(ThemeContext);
-    const {aurl} = useContext(UrlContext);
-    const {allow, autoLogin, doc, mode, token} = useContext(LoginContext);
+    const {aurl, url} = useContext(UrlContext);
+    const {allow, autoLogin, doc, mode, token, storeId, setStoreId} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
 
     const [input, setInput] = useState("");
@@ -218,7 +223,10 @@ const Main = ({ navigation }) => {
 
     const _handleNoticePress = () => { navigation.navigate("Notice") };
 
-    const _handleSearchPress = () => { navigation.navigate("SearchTab", {input: input}) };
+    const _handleSearchPress = () => { 
+        navigation.navigate("SearchTab", {input: input});
+        setInput("");
+     };
 
     const _handleItemPress = item => {
         navigation.navigate('AuctionDetail', { id: item.auctionId })
@@ -261,9 +269,36 @@ const Main = ({ navigation }) => {
         setLatestAuctions(res);
     };
    
+    const _setStoreId = async() => {
+        if(mode==="STORE"){
+            let fixedUrl = url+"/member/store";
+
+            let options = {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-AUTH-TOKEN' : token,
+                },
+            };
+    
+            try {
+                spinner.start();
+                let response = await fetch(fixedUrl, options);
+                let res = await response.json();
+                setStoreId(res.data.id);
+            }catch(error) {
+                console.error(error);
+            }finally {
+                spinner.stop();
+            }
+
+        }
+    };
 
     useEffect(()=> {
         handleAuctionApi();
+        _setStoreId();
     },[]);
 
     useEffect(() => {
@@ -273,7 +308,7 @@ const Main = ({ navigation }) => {
     },[auctionData]);
 
     return (
-        <>
+        <BackCon>
             <Header>
                 <InputContainer>
                     <StyledTextInput
@@ -355,7 +390,7 @@ const Main = ({ navigation }) => {
 
 
             
-        </>
+        </BackCon>
     );
 };
 

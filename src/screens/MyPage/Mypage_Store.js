@@ -1,13 +1,13 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import styled from "styled-components/native";
 import { MypageButton, ProfileImage, SmallButton } from '../../components'
-import {LoginContext} from "../../contexts";
+import {LoginContext, UrlContext, ProgressContext} from "../../contexts";
 import {Alert} from "react-native";
 
 const Container = styled.View`
     background-color: ${({ theme }) => theme.background};
     flex: 1;
-    padding: 0 50px;
+    padding: 0 10%;
 `;
 
 const IconContainer = styled.View`
@@ -24,11 +24,12 @@ const InfoContainer = styled.View`
 `;
 
 const ProfileContainer = styled.View`
+    width: 100%;
     flex-direction: row;
     align-self: flex-start;
     background-color: ${({ theme }) => theme.background};
-    align-items:center;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 30px;
 `;
 
@@ -38,20 +39,52 @@ const ProfileButton = styled.TouchableOpacity`
     
 `
 const Username = styled.Text`
-    font-size: 25px;
+    font-size: 23px;
     margin-left: 40px;
     font-weight: bold;
 `;
 
 const LogoutContainer = styled.View`
+    width: 100%;
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
 `;
 
 const Mypage_Store = ({ navigation }) => {
+    const {token, setSuccess, doc, storeId} = useContext(LoginContext);
+    const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const [name, setName] = useState("");
 
-    const {setSuccess} = useContext(LoginContext);
+
+    useEffect(()=>{
+        handleApi();
+    },[])
+
+    const handleApi = async () => {
+    let fixedUrl = url+"/member/store/"+storeId;
+
+    let options = {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-AUTH-TOKEN' : token
+        },
+    };
+
+    try {
+        spinner.start();
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        setName(res.data.name);
+    }catch (error) {
+        console.error(error);
+      } finally {
+        spinner.stop();
+      }
+    };
 
     return (
         <Container>
@@ -65,13 +98,14 @@ const Mypage_Store = ({ navigation }) => {
                     <ProfileButton onPress={() => {
                         navigation.navigate("StoreInfo");
                     }}>
-                        <Username>업체 이름</Username>
+                       <Username style={{color: name===""? "white" : "black"}}>{name}</Username>
                     </ProfileButton>
                 </ProfileContainer>
                 <LogoutContainer>
-                    <SmallButton title="서류등록"
-                        containerStyle={{ width: '30%' }}
+                    <SmallButton title={doc? "서류 변경" : "서류 등록"}
+                        containerStyle={{ width: '35%' }}
                         onPress={() => {navigation.navigate("DocumentRegister")}}
+                        uploaded={doc? true : false}
                     />
                     <SmallButton title="로그아웃" containerStyle={{ width: '30%', }}
                         onPress={()=>{

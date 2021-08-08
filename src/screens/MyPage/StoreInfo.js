@@ -71,6 +71,7 @@ const  StoreInfo = ({navigation}) => {
 
         };
         try {
+            spinner.start();
             let response = await fetch(url,options);
             let res = await response.json();
             console.log(res);
@@ -84,6 +85,8 @@ const  StoreInfo = ({navigation}) => {
 
           } catch (error) {
             console.error(error);
+          } finally {
+            spinner.stop();
           }
     }
 

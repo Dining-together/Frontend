@@ -94,9 +94,9 @@ const StoreConvChange = ({ navigation, route }) => {
     const {token, allow} = useContext(LoginContext);
 
     //업체 편의정보
-    const [personNumber, setPersonNumber] = useState(String(route.params.personNumber));
-    const [isParking, setIsParking] = useState(route.params.isParking);
-    const [parkingNumber, setParkingNumber] = useState(String(route.params.parkingNumber));
+    const [personNumber, setPersonNumber] = useState((route.params.personNumber !== "") ? String(route.params.personNumber) : null);
+    const [isParking, setIsParking] = useState((route.params.isParking !== "")? route.params.isParking :false);
+    const [parkingNumber, setParkingNumber] = useState((route.params.parkingNumber !== "")? String(route.params.parkingNumber) : 0);
 
     // 기타시설
     const [facilityEtcs, setFacilityEtcs] = useState(route.params.facilityEtcs);
@@ -107,14 +107,39 @@ const StoreConvChange = ({ navigation, route }) => {
     const [highchair, setHighchair] = useState(route.params.highchair); // 유아용 의자
     const [handicap, setHandicap] = useState(route.params.handicap); // 장애인 편의시설
     const [pet, setPet] = useState(route.params.pet); // 반려동물
-
+    const [changed, setChanged] = useState(false);
+    const [func, setFunc] = useState([]);
     // 업로드
     const [disabled, setDisabled] = useState(false)
     const [uploaded, setUploaded] = useState(false);
     const [errorMessage, setErrorMessage] = useState();
 
     const didMountRef = useRef();
-    
+
+        // 편의정보 facilityEtcs 수정 (서버로 보내기 위해)
+        const _setList = () => {
+            let facList = [];
+            if(room) {facList.push("ROOM");}
+            if(groupseat) {facList.push("GROUPSEAT");}
+            if(sedentary) {facList.push("SEDENTARY");}
+            if(internet) {facList.push("INTERNET");}
+            if(highchair) {facList.push("HIGHCHAIR");}
+            if(handicap) {facList.push("HANDICAP");}
+            if(pet) {facList.push("PET");}
+            
+            return facList;
+        }
+
+
+    useEffect(()=> {
+        setChanged(!changed);
+    },[room, groupseat, sedentary, internet, highchair, handicap, pet]);
+
+    useEffect(()=> {
+        setFunc(_setList());
+    },[changed]);
+
+
     //에러 메세지 설정 
     useEffect(() => {
         if (didMountRef.current) {
@@ -137,7 +162,6 @@ const StoreConvChange = ({ navigation, route }) => {
         }
     }, [personNumber, isParking, parkingNumber]);
 
-
     // 등록 버튼 활성화
     useEffect(() => {
         setDisabled(!(personNumber &&!errorMessage));
@@ -150,11 +174,11 @@ const StoreConvChange = ({ navigation, route }) => {
             headerRight: () => (
                 disabled ? (<MaterialCommunityIcons name="check" size={35} onPress={_onConvPress}
                     style={{ marginRight: 10, marginBottom: 3, opacity: 0.3 }} />)
-                    : (<MaterialCommunityIcons name="check" size={35} onPress={_onConvPress}
+                    : (<MaterialCommunityIcons name="check" size={35} onPress={() => _onConvPress()}
                         style={{ marginRight: 10, marginBottom: 3, opacity: 1 }} />)
             )
         });
-    }, [disabled]);
+    }, [disabled, func]);
 
     // 편의 시설 등록
     const postApi = async () => {
@@ -169,16 +193,17 @@ const StoreConvChange = ({ navigation, route }) => {
             },
             body: JSON.stringify({ 
                 capacity: personNumber,
-                facilityTypes: _setList(),
+                facilityTypes: func,
                 parking: isParking,
                 parkingCount: parkingNumber,
                  
             }),
         };
         try {
+        
             let response = await fetch(fixedUrl,options);
             let res = await response.json();
-            console.log(res);
+    
 
             return res["success"];
 
@@ -196,7 +221,6 @@ const StoreConvChange = ({ navigation, route }) => {
                 spinner.start();
 
                 const result = await postApi();
-                console.log(facilityEtcs);
 
                 if(result){
                     setDisabled(true);
@@ -215,19 +239,6 @@ const StoreConvChange = ({ navigation, route }) => {
         }
     };
 
-    // 편의정보 facilityEtcs 수정 (서버로 보내기 위해)
-    const _setList = () => {
-        let facList = [];
-        if(room) {facList.push("ROOM");}
-        if(groupseat) {facList.push("GROUPSEAT");}
-        if(sedentary) {facList.push("SEDENTARY");}
-        if(internet) {facList.push("INTERNET");}
-        if(highchair) {facList.push("HIGHCHAIR");}
-        if(handicap) {facList.push("HANDICAP");}
-        if(pet) {facList.push("PET");}
-        
-        return facList;
-    }
 
 
 
@@ -274,28 +285,28 @@ const StoreConvChange = ({ navigation, route }) => {
                     <RowItemContainer>
                         <DescTitle>기타시설</DescTitle>
                         <ButtonContainer> 
-                        <ButtonBox onPress={() =>{setRoom(previousState => !previousState)}} checked={room} width={15}>
+                        <ButtonBox onPress={() =>{setRoom(!room)}} checked={room} width={15}>
                             <ButtonText>룸</ButtonText>
                         </ButtonBox>
-                        <ButtonBox onPress={() =>{setGroupseat(previousState => !previousState)}} checked={groupseat} width={25}>
+                        <ButtonBox onPress={() =>{setGroupseat(!groupseat)}} checked={groupseat} width={25}>
                             <ButtonText>단체석</ButtonText>
                         </ButtonBox>
-                        <ButtonBox onPress={() =>{setSedentary(previousState => !previousState)}} checked={sedentary} width={20}>
+                        <ButtonBox onPress={() =>{setSedentary(!sedentary)}} checked={sedentary} width={20}>
                             <ButtonText>좌식</ButtonText>
                         </ButtonBox>  
-                        <ButtonBox onPress={() =>{setInternet(previousState => !previousState)}} checked={internet}>
+                        <ButtonBox onPress={() =>{setInternet(!internet)}} checked={internet}>
                             <ButtonText>무선인터넷</ButtonText>
                         </ButtonBox>
                         </ButtonContainer>
                         <ButtonContainer>
-                        <ButtonBox onPress={() =>{setHighchair(previousState => !previousState)}} checked={highchair}>
+                        <ButtonBox onPress={() =>{setHighchair(!highchair)}} checked={highchair}>
                             <ButtonText>유아용 의자</ButtonText>
                         </ButtonBox>
 
-                        <ButtonBox onPress={() =>{setHandicap(previousState => !previousState)}} checked={handicap} width={40}>
+                        <ButtonBox onPress={() =>{setHandicap(!handicap)}} checked={handicap} width={40}>
                             <ButtonText>장애인 편의시설</ButtonText>
                         </ButtonBox>
-                        <ButtonBox onPress={() =>{setPet(previousState => !previousState)}} checked={pet} width={25}>
+                        <ButtonBox onPress={() =>{setPet(!pet)}} checked={pet} width={25}>
                             <ButtonText>반려동물</ButtonText>
                         </ButtonBox>
                         </ButtonContainer>

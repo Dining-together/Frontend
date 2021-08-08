@@ -3,7 +3,10 @@ import styled from 'styled-components/native';
 import PropTypes from 'prop-types';
 import { MaterialIcons } from'@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Platform, Alert} from 'react-native';
+import { Platform, Alert, Dimensions} from 'react-native';
+
+const WIDTH = Dimensions.get("screen").width;
+const HEIGHT = Dimensions.get("screen").height;
 
 const Container = styled.View`
     align-self: center;
@@ -11,15 +14,15 @@ const Container = styled.View`
 `;
 
 const StyledImage = styled.Image`
-    width: 100px;
-    height: 100px;
+    width: ${WIDTH*0.25};
+    height: ${WIDTH*0.25};
     border-radius: 50px;
     background-color: ${({theme}) => theme.profileBackground};
 `;
 
 const ButtonContainer = styled.TouchableOpacity`
     background-color: ${({theme}) => theme.imageButtonBackground};
-    position: absolute;
+    position: relative;
     bottom: 0;
     right: 0;
     width: 30px;

@@ -90,6 +90,7 @@ const  UesrInfo = ({navigation}) => {
 
         };
         try {
+            spinner.start();
             let response = await fetch(url,options);
             let res = await response.json();
             console.log(res);
@@ -107,6 +108,8 @@ const  UesrInfo = ({navigation}) => {
 
           } catch (error) {
             console.error(error);
+          } finally {
+            spinner.stop();
           }
     }
 
@@ -221,7 +224,7 @@ const  UesrInfo = ({navigation}) => {
                             onPress={()=>{}}
                         /></AdditionalContainer>
                     </RowContainer>
-                    <InfoText label="지역" content={addr}/>
+                    <InfoText label="주소" content={addr}/>
                 </InfoContainer>
                 
                 <View style={styles.hr}/>

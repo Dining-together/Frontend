@@ -1,12 +1,11 @@
 import React, {useState, useEffect, useRef, useContext} from 'react';
 import styled from "styled-components/native";
-import {View, Dimensions, StyleSheet, TouchableOpacity, Alert} from "react-native";
+import {View, Dimensions, StyleSheet, TouchableOpacity, Alert, Modal} from "react-native";
 import {ProfileImage, InfoText, Button, RadioButton} from '../../components';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { removeWhitespace, validateEmail, validatePassword } from '../../utils/common';
+import { removeWhitespace, validatePassword } from '../../utils/common';
 import * as Location from "expo-location";
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
-import {MaterialCommunityIcons} from "@expo/vector-icons";
+import Postcode from '@actbase/react-daum-postcode';
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
 
 
@@ -77,7 +76,7 @@ const  UserInfoChange = ({navigation, route}) => {
 
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
-    const {token} = useContext(LoginContext);
+    const {token, allow, setAllow} = useContext(LoginContext);
 
     const [photo, setPhoto] = useState(route.params.photo);
     const [userName, setuserName] = useState(route.params.userName);
@@ -91,70 +90,40 @@ const  UserInfoChange = ({navigation, route}) => {
 
     const didMountRef = useRef();
 
-    
-    //현재 위치
-    const [loc, setLoc] = useState(route.params.addr); //선택 지역 
-    const [lati, setLati] = useState(route.params.lati);
-    const [longi, setLongi] = useState(route.params.longi);
-    const [region, setRegion] = useState({
-        longitude: longi,
-        latitude: lati,
-        latitudeDelta: 0.3,
-        longitudeDelta: 0.3,
-    });
-    const [selectedLocation, setSelectedLocation] = useState(null);
+    //주소
+    const [addr, setAddr] = useState(route.params.addr);
+    const [lat, setLat] = useState(null);
+    const [lon, setLon] = useState(null);
+    const [allowLoc, setAllowLoc] = useState(allow);
+    const [isAddressModal, setIsAddressModal] = useState(false);
+    const [isChanging, setIsChanging] = useState(false);
 
 
-    //현재 위치 
-    const getLocation = async () => {
-        let {status} = await Location.requestForegroundPermissionsAsync();
-        if (status=="granted") {
-            let location = await Location.getCurrentPositionAsync({}); 
-            setLati(location.coords.latitude);
-            setLongi(location.coords.longitude);
+    const _getLocPer = async () => {
+        try{
+            const {status} = await Location.requestForegroundPermissionsAsync();
+            if(status === "granted"){
+                setAllow(true);
+                setAllowLoc(true);
+            };
+        }catch (e) {
+            console.log(e);
+        };
+      };
+
+      const _getLL = async(address) => {
+        Location.setGoogleApiKey("AIzaSyBPYCpA668yc46wX23TWIZpQQUj08AzWms");
+        let res =  await Location.geocodeAsync(address);
+        setLat(res[0].latitude);
+        setLon(res[0].longitude);
+        setIsChanging(false);
+    };
+
+    useEffect(() => {
+        if(!allow){
+            _getLocPer();
         }
-        return loc;
-    };
-
-      
-    const convertKoreanLocation = async(res) => {
-      let result = "";
-      if (res.localityInfo.administrative.length >= 4){
-        let gu = res.localityInfo.administrative[3].name;
-        if (gu[gu.length-1]==="구"){
-          result = `${res.principalSubdivision} ${res.localityInfo.administrative[2].name} ${res.localityInfo.administrative[3].name}`;
-        }else {
-          result = `${res.principalSubdivision} ${res.localityInfo.administrative[2].name}`;
-        }
-      }else{
-        result = `${res.principalSubdivision} ${res.localityInfo.administrative[2].name}`;
-      }
-  
-      return result;
-    };
-  
-    const getKoreanLocation = async (lat, lng, api) => {
-      let response = await fetch(api);
-      let res = await response.json();
-      let result = convertKoreanLocation(res);
-      return result;
-    };
-  
-    const getGeocodeAsync = async (location) => {
-      let geocode = await Location.reverseGeocodeAsync(location);
-      let region = geocode[0]["region"]
-      let city = geocode[0]["city"]
-      let street = geocode[0]["street"];
-  
-      let selectedLatitude = location["latitude"];
-      let selectedLongitude = location["longitude"];
-      let aapi = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${selectedLatitude}&longitude=${selectedLongitude}&localityLanguage=ko`;
-      
-      let res = await getKoreanLocation(selectedLatitude, selectedLongitude, aapi);
-      setLoc(res);
-  
-  
-    };
+    },[]);  
 
     //에러 메세지 설정 
     useEffect(() => {
@@ -168,7 +137,7 @@ const  UserInfoChange = ({navigation, route}) => {
                 _errorMessage = "비밀번호 조건을 확인하세요.";
             } else if (!age) {
                 _errorMessage = "나이를 입력하세요.";
-            }else if (!loc) {
+            }else if (!addr) {
                 _errorMessage = "지역을 입력해주세요.";
             }
             else {
@@ -180,15 +149,15 @@ const  UserInfoChange = ({navigation, route}) => {
         } else {
             didMountRef.current = true;
         }
-    }, [userName, password, age, loc]);
+    }, [userName, password, age, addr]);
 
     // 버튼 활성화
     useEffect(() => {
         setDisabled(            
-            !(userName && password &&  !errorMessage && validatePassword(password) && age && loc )
+            !(userName && password &&  !errorMessage && validatePassword(password) && age && addr && !isChanging )
         );
         
-    }, [userName, password, errorMessage, age, loc]);
+    }, [userName, password, errorMessage, age, addr, isChanging]);
 
     
 
@@ -209,9 +178,9 @@ const  UserInfoChange = ({navigation, route}) => {
                 password: password,
                 age: parseInt(age),
                 gender: gender,
-                addr: String(loc),
-                latitude: lati,
-                longitude: longi,
+                addr: addr,
+                latitude: lat,
+                longitude: lon,
                 
             }),
            
@@ -288,7 +257,7 @@ const  UserInfoChange = ({navigation, route}) => {
             }
             else{
                 if(result){
-                    navigation.navigate("StoreInfo");
+                    navigation.pop();
                 }
                 else{
                     alert("저장에 실패했습니다.");
@@ -305,7 +274,9 @@ const  UserInfoChange = ({navigation, route}) => {
     }
   
     useEffect(() => {
-      const result = getLocation();
+        if(!allow){
+            const result = getLocation();
+        }
     }, []);
 
 
@@ -371,45 +342,42 @@ const  UserInfoChange = ({navigation, route}) => {
                     </RowContainer>
                         
                 <InfoText
-                        label="지역"
-                        value= {( loc !== null)? String(loc) : ""}
+                        label="주소"
+                        value= {addr}
                         placeholder="지역이 선택되지 않았습니다."
+                        onChangeText={(text) => setAddr(text)}
                         returnKeyType= "done"
                         isChanged
-                        editable={false}
+                        editable={true}
+                        showButton
+                        title="검색"
+                        onPress={() => { 
+                            if(allowLoc){
+                                setIsAddressModal(true); 
+                                setAddr("");
+                            }else {
+                                Alert.alert("Location Permission Error","위치 정보를 허용해주세요.");
+                            }
+                            }}
                         />
+                        <Modal visible={isAddressModal} transparent={true}>
+                        <TouchableOpacity style={styles.background} onPress={() => setIsAddressModal(false)}/>
+                        <View style={styles.modal}>
+                            <Postcode
+                                style={{  width: 350, height: 450 }}
+                                jsOptions={{ animated: true, hideMapBtn: true }}
+                                onSelected={data => {
+                                let ad = JSON.stringify(data.address).replace(/\"/g,'');
+                                setAddr(ad);
+                                setIsAddressModal(false);
+                                setIsChanging(true);
+                                _getLL(ad);
+                                }}
+                            />
+                        </View>
+                    </Modal>
                 </InfoContainer>
-                <MapContainer>
-                <MapView 
-                style={{
-                    width: WIDTH*0.8,
-                    height: HEIGHT*0.2,
-                }}
-                initialRegion={{
-                    longitude: longi,
-                    latitude: lati,
-                    latitudeDelta: 0.5,
-                    longitudeDelta: 0.5,
-                }}
-                region={region}
-                onRegionChangeComplete={(r) => setRegion(r)}
-                provider={PROVIDER_GOOGLE}
-                showsUserLocation={true}
-                loadingEnabled={true}>
-                    <Marker
-                    coordinate={region}
-                    pinColor="blue"
-                    onPress={() => {setSelectedLocation(region); getGeocodeAsync(region);}}
-                    />
-                </MapView>
-                <CurrentButton onPress= {()=> setRegion({
-                            longitude: longi,
-                            latitude: lati,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01, })}>
-                <MaterialCommunityIcons name="map-marker" size={30} color="black"/>
-                </CurrentButton>
-                </MapContainer>
+                
 
                 <InfoContainer>
                     <ErrorText>{errorMessage}</ErrorText>

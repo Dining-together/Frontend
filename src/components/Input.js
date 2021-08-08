@@ -76,6 +76,7 @@ const Input = forwardRef(
       onPress,
       keyboardType,
       completed,
+      editable,
     },
     ref
   ) => {
@@ -107,6 +108,7 @@ const Input = forwardRef(
           underlineColorAndroid="transparent" // Android only
           keyboardType={keyboardType}
           hasButton={hasButton}
+          editable={editable}
         />
         {hasButton && 
         <InputButton 
@@ -125,6 +127,7 @@ Input.defaultProps = {
   buttonTitle: "",
   onPress: ()=> {},
   completed: false,
+  editable: true,
 };
 
 Input.propTypes = {
@@ -144,6 +147,7 @@ Input.propTypes = {
   onPress: PropTypes.func,
   keyboardType: PropTypes.string,
   completed: PropTypes.bool,
+  editable: PropTypes.bool,
 };
 
 export default Input;

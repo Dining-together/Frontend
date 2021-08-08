@@ -203,7 +203,9 @@ const Login = ({navigation}) => {
         if(m === "STORE"){
             const d = await callback2();
         }
-        await callback3();
+        if(!allow){
+            await callback3();
+        }
     };
 
     const _handleLoginPress = async () => {
