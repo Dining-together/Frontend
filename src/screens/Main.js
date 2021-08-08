@@ -212,7 +212,7 @@ const Store = ({ item: { id, storeName, score, reviews, foodType, src }, onPress
 const Main = ({ navigation }) => {
     const theme = useContext(ThemeContext);
     const {aurl, url} = useContext(UrlContext);
-    const {allow, autoLogin, doc, mode, token, storeId, setStoreId} = useContext(LoginContext);
+    const {allow, autoLogin, doc, mode, token} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
 
     const [input, setInput] = useState("");
@@ -269,36 +269,9 @@ const Main = ({ navigation }) => {
         setLatestAuctions(res);
     };
    
-    const _setStoreId = async() => {
-        if(mode==="STORE"){
-            let fixedUrl = url+"/member/store";
-
-            let options = {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-AUTH-TOKEN' : token,
-                },
-            };
-    
-            try {
-                spinner.start();
-                let response = await fetch(fixedUrl, options);
-                let res = await response.json();
-                setStoreId(res.data.id);
-            }catch(error) {
-                console.error(error);
-            }finally {
-                spinner.stop();
-            }
-
-        }
-    };
 
     useEffect(()=> {
         handleAuctionApi();
-        _setStoreId();
     },[]);
 
     useEffect(() => {

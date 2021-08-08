@@ -52,7 +52,7 @@ const LogoutContainer = styled.View`
 `;
 
 const Mypage_Store = ({ navigation }) => {
-    const {token, setSuccess, doc, storeId} = useContext(LoginContext);
+    const {token, setSuccess, doc, id} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const [name, setName] = useState("");
@@ -63,7 +63,7 @@ const Mypage_Store = ({ navigation }) => {
     },[])
 
     const handleApi = async () => {
-    let fixedUrl = url+"/member/store/"+storeId;
+    let fixedUrl = url+"/member/store/"+id;
 
     let options = {
         method: 'GET',
