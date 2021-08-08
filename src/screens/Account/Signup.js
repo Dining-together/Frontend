@@ -231,9 +231,9 @@ const Signup = ({ navigation, route }) => {
                 !(userId && email && password && passwordConfirm && !errorMessage &&isEmailValidated && !emailErrorMessage && !isChanging)
             );
             if(route.params.mode==="User"){
-                if(!gender){
-                    setDisabled(true);
-                }
+                setDisabled(            
+                    !(gender && age && addr)
+                );
             }
         }, [userId, email, password, passwordConfirm, errorMessage, isEmailValidated, gender,age, emailErrorMessage, isChanging]);
         
