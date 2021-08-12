@@ -1,8 +1,10 @@
-import React, {useState} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import {UseList} from "../../utils/data";
 import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import { SmallButton } from '../../components';
+import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
+
 
 const UseContainer = styled.View`
     flex-direction: row;
@@ -52,14 +54,14 @@ const ButtonContainer = styled.View`
 
 `;
 
-const Item = ({item: {id, src, name, menu, desc, bidPrice, date, reviewUploaded}, onReviewPress, onUseDetail}) => {
+const Item = ({item: {id, src, storeName, menu, desc, bidPrice, date, reviewUploaded}, onReviewPress, onUseDetail}) => {
     return (
         <UseContainer>
             <ImageContainer>
                 <StyledImage source={{ uri: src }} rounded={false} />
             </ImageContainer>
             <TextContainer>
-                <NameTitle>{name}</NameTitle>
+                <NameTitle>{storeName}</NameTitle>
                 <DescText>낙찰가 {bidPrice}원</DescText>
                 <DescText>메뉴 {menu}</DescText>
                 <ButtonContainer>
@@ -83,24 +85,79 @@ const Item = ({item: {id, src, name, menu, desc, bidPrice, date, reviewUploaded}
 
 
 const UseManage = ({navigation}) => {
-    const [data, setData] = useState(UseList);
 
-    const _onReviewPress = () => {
-        navigation.navigate("ReviewWrite");
+    const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const {token, doc, id} = useContext(LoginContext);
+
+    const [data, setData] = useState([]);
+
+    const getApi = async (url) => {
+
+        console.log(url);
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+
+        };
+        try {
+            spinner.start();
+            let response = await fetch(url,options);
+            let res = await response.json();
+            console.log(res);
+
+            setData(res.list);
+
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          } finally {
+            spinner.stop();
+          }
+    }
+
+
+    useEffect( () => {
+        getApi(url+"/auction/user/bids");
+
+        // 화면 새로고침
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            getApi(url+"/auction/user/bids");
+        });
+
+        return willFocusSubscription;
+
+    }, []);
+
+    const _onReviewPress = item => {
+        var today = new Date();
+        
+        if(item.reservation < today){
+            navigation.navigate("ReviewWrite", {successBidId : item['successBidId']});
+        }
+        else{
+            alert("예약 시간 후에 리뷰를 작성할 수 있습니다.");
+        }
     };
 
     const _onUseDetail = item => {
-        navigation.navigate("OrderDetail", {name: item['id']});
+        navigation.navigate("OrderDetail", {name: item['auctionId']});
     };
 
     return (
         <FlatList 
             horizontal={false}
-            keyExtractor={item => item['id'].toString()}
+            keyExtractor={item => item['successBidId'].toString()}
             data={data}
             renderItem={({item}) => (
                 <Item item={item} 
-                    onReviewPress={_onReviewPress}
+                    onReviewPress={() => _onReviewPress(item)}
                     onUseDetail={() => _onUseDetail(item)}
                 />
 
