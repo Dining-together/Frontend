@@ -137,6 +137,19 @@ const ReviewImageSet = ({reviewImages}) => {
                     </>
                 </Row>);
                 break;
+            case 4:
+                show=
+                (<Row>
+                    <>
+                        <ReviewImage key={0} source={{uri: reviewImages[0].path}} height = {HEIGHT*0.15}/>
+                        <ReviewImage key={1} source={{uri: reviewImages[1].path}} height = {HEIGHT*0.15}/>
+                    </>
+                    <>
+                        <ReviewImage key={2} source={{uri: reviewImages[2].path}} height = {HEIGHT*0.15}/>
+                        <ReviewImage key={3} source={{uri: reviewImages[3].path}} height = {HEIGHT*0.15}/>
+                    </>
+                </Row>);
+                
         }
         return show;
     }
