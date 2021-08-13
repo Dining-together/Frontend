@@ -245,6 +245,12 @@ const AuctionDetail = ({ navigation, route}) => {
 
     useEffect(()=> {
         handleApi();
+
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            handleApi();
+        });
+
+        return willFocusSubscription;
     },[]);
 
     return (
