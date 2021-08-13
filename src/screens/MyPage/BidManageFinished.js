@@ -1,7 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import styled from "styled-components/native";
 import {Dimensions, FlatList} from "react-native";
-import {AuctionList} from "../../utils/data";
+import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
+import {changeDateData, changeListData, cutDateData} from "../../utils/common";
+
 
 const WIDTH = Dimensions.get("screen").width; 
 
@@ -62,25 +64,25 @@ const TitleContainer = styled.View`
 `;
 
 
-const Item = ({item: {id, title, type, count, region, preMenu, prePrice, bookTime, registerTime, bidsuccess}, onPress,isUser}) => {
+const Item = ({item: {auctionId, title, storeType, groupType,  groupCnt, deadline, addr, minPrice, maxPrice, reservation, createdDate, success}, onPress,isUser}) => {
     return (
-        <ItemContainer onPress={onPress} >
+        <ItemContainer onPress={() => onPress(auctionId)} >
             <TimeTextContiner>
-                <ContentText>{bookTime}</ContentText>
+                <ContentText>{changeDateData(reservation)} 예약</ContentText>
             </TimeTextContiner>
             <ItemBox>
                 <TitleContainer>
                     <ContentTitleText>{title}</ContentTitleText>
                     { !isUser &&
-                    <BidResultText color = { bidsuccess ? "green" : "red"}>{ bidsuccess ? "낙찰" : "실패"}</BidResultText>
+                    <BidResultText color = { success ? "green" : "red"}>{ success ? "낙찰" : "실패"}</BidResultText>
                     }
                 </TitleContainer>
 
-                <ContentText>단체 유형: {type}({count}명)</ContentText>
-                <ContentText>선호 지역: {region}</ContentText>
-                <ContentText>선호 메뉴: {preMenu}</ContentText>
-                <ContentText>선호 가격대: {prePrice}</ContentText>
-                <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{registerTime}</ContentText>
+                <ContentText>단체 유형: {groupType} ({groupCnt}명)</ContentText>
+                <ContentText>선호 지역: {addr}</ContentText>
+                <ContentText>선호 메뉴: {changeListData(storeType)}</ContentText>
+                <ContentText>선호 가격대: {minPrice}원 ~ {maxPrice}원</ContentText>
+                <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{changeDateData(createdDate)} 등록</ContentText>
             </ItemBox>
         </ItemContainer>
     );
@@ -88,20 +90,76 @@ const Item = ({item: {id, title, type, count, region, preMenu, prePrice, bookTim
 
 const BidManageFinished = ({navigation, route}) => {
 
+    const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const {token,  id} = useContext(LoginContext);
+
+    const [data, setData ] = useState([]);
     const [isUser, setIsUser] = useState(route.params.isUser);
 
-    const _onAuctionPress = item => {
-        navigation.navigate("AuctionDetail",{id: item['id']});
+    const _onAuctionPress = itemId => {navigation.navigate("AuctionDetail",{id: itemId})};
+
+    // 마감된 공고 불러오기
+    const getApi = async () => {
+
+        let fixedUrl = (isUser ? url+"/auction/"+`${id}`+"/auctions" : url+"/auction/"+`${id}`+"/auction");
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+
+        };
+        try {
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            console.log(res);
+
+            if(isUser){
+                setData(_setLatestList(_filterProceeding(res['list'])));
+            } else {
+                setData(_setLatestList(_filterProceeding(res.list.auction)));
+            }
+
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          } finally {
+            spinner.stop();
+          }
+    }
+
+    useEffect( () => {
+        getApi();
+
+    },[]);
+
+
+    // 최신순
+    const _setLatestList = (prev) => {
+        var res = prev.sort(function (a,b){
+            return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
+        });
+        return res;
     };
+
+    const _filterProceeding = (prev) => {
+        let array = prev.filter((obj) => obj.status.includes('END') === true);
+        return array;
+};
     return (
         <Container>
             <BidContainer>
                 <FlatList
-                    keyExtractor={item => item['id'].toString()}
-                    data={AuctionList} 
+                    keyExtractor={item => item['auctionId'].toString()}
+                    data={data} 
                     renderItem={({item}) => (
                         <Item item={item} 
-                            onPress={()=> _onAuctionPress(item)} 
+                            onPress={()=> _onAuctionPress(item['auctionId'])} 
                             isUser={isUser}/>
                     )}/>
             </BidContainer>
