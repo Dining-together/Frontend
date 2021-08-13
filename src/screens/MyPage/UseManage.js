@@ -1,5 +1,4 @@
 import React, {useState, useContext, useEffect} from 'react';
-import {UseList} from "../../utils/data";
 import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import { SmallButton } from '../../components';
@@ -54,7 +53,7 @@ const ButtonContainer = styled.View`
 
 `;
 
-const Item = ({item: {id, src, storeName, menu, desc, bidPrice, date, reviewUploaded}, onReviewPress, onUseDetail}) => {
+const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, onUseDetail}) => {
     return (
         <UseContainer>
             <ImageContainer>
@@ -62,20 +61,17 @@ const Item = ({item: {id, src, storeName, menu, desc, bidPrice, date, reviewUplo
             </ImageContainer>
             <TextContainer>
                 <NameTitle>{storeName}</NameTitle>
-                <DescText>낙찰가 {bidPrice}원</DescText>
+                <DescText>낙찰가 {price}원</DescText>
                 <DescText>메뉴 {menu}</DescText>
                 <ButtonContainer>
                     <SmallButton 
-                        title={reviewUploaded ? "리뷰완료" : "리뷰쓰기" }
+                        title={review ? "리뷰완료" : "리뷰쓰기" }
                         onPress={onReviewPress} 
                         containerStyle={{width: '30%', height: '80%', marginRight: '4%'}}
-                        disabled={reviewUploaded}
-                        uploaded={reviewUploaded}
+                        disabled={review}
+                        uploaded={review}
                         />
-                    <SmallButton 
-                        title="이용상세" 
-                        onPress={onUseDetail} 
-                        containerStyle={{width: '30%', height: '80%'}}/>
+
                 </ButtonContainer>
             </TextContainer>
 
@@ -88,9 +84,9 @@ const UseManage = ({navigation}) => {
 
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
-    const {token, doc, id} = useContext(LoginContext);
+    const {token} = useContext(LoginContext);
 
-    const [data, setData] = useState([]);
+    const [list, setList] = useState([]);
 
     const getApi = async (url) => {
 
@@ -111,7 +107,7 @@ const UseManage = ({navigation}) => {
             let res = await response.json();
             console.log(res);
 
-            setData(res.list);
+            setList(res.list);
 
             return res["success"];
 
@@ -122,8 +118,8 @@ const UseManage = ({navigation}) => {
           }
     }
 
-
     useEffect( () => {
+        // 낙찰공고 불러오기
         getApi(url+"/auction/user/bids");
 
         // 화면 새로고침
@@ -136,7 +132,7 @@ const UseManage = ({navigation}) => {
     }, []);
 
     const _onReviewPress = item => {
-        var today = new Date();
+        var today = new Date().toJSON();;
         
         if(item.reservation < today){
             navigation.navigate("ReviewWrite", {successBidId : item['successBidId']});
@@ -146,19 +142,14 @@ const UseManage = ({navigation}) => {
         }
     };
 
-    const _onUseDetail = item => {
-        navigation.navigate("OrderDetail", {name: item['auctionId']});
-    };
-
     return (
         <FlatList 
             horizontal={false}
             keyExtractor={item => item['successBidId'].toString()}
-            data={data}
+            data={list}
             renderItem={({item}) => (
                 <Item item={item} 
                     onReviewPress={() => _onReviewPress(item)}
-                    onUseDetail={() => _onUseDetail(item)}
                 />
 
         )}/>                
