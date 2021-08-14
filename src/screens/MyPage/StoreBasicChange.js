@@ -98,6 +98,7 @@ const StoreBasicChange = ({ navigation, route }) => {
     // 업체 기본정보
     const [phoneNumber, setPhoneNumber] = useState(route.params.phoneNumber);
     const [address, setAddress] = useState(route.params.address);
+    const [ment, setMent] = useState(route.params.ment);
 
     const [openTime, setOpenTime] = useState(route.params.openTime);
     const [openTimeVisible, setOpenTimeVisible] = useState(false);
@@ -293,6 +294,14 @@ const StoreBasicChange = ({ navigation, route }) => {
       setCloseTimeVisible(false);
     };
 
+    const selectRegion = async(data) => {
+        let ad = JSON.stringify(data.address).replace(/\"/g,'');
+        setAddress(ad);
+        setIsAddressModal(false);
+        setIsChanging(true);
+        await _getLL(ad);
+    };
+
     // 기본정보 수정 
     const _onBasicPress = async() => {
         setUploaded(true);
@@ -301,8 +310,8 @@ const StoreBasicChange = ({ navigation, route }) => {
             try{
                 spinner.start();
     
-                const result = await postApi(url+"/member/store");
-                const result_photo = await postImageApi();
+                var result = await postApi(url+"/member/store");
+                var result_photo = await postImageApi();
 
                 if(result && result_photo){
                     setErrorMessage("아래 정보를 입력해주세요");
@@ -340,7 +349,8 @@ const StoreBasicChange = ({ navigation, route }) => {
                 openTime: openT,
                 phoneNum: phoneNumber,
                 storeType: selectedType,
-
+                comment: ment,
+                storeName: "",
             }),
         };
         try {
@@ -402,7 +412,7 @@ const StoreBasicChange = ({ navigation, route }) => {
                 <InfoContainer>
                     <ManageText 
                         label="업체 전화번호"
-                        value={phoneNumber}
+                        value={phoneNumber!== "first"? phoneNumber: ""}
                         onChangeText={text => setPhoneNumber(text)}
                         placeholder="업체 전화번호"
                         keyboardType="number-pad"
@@ -421,7 +431,6 @@ const StoreBasicChange = ({ navigation, route }) => {
                             />
                             <SmallButton title="검색" containerStyle={{width: '20%', marginLeft:10, height: 50, marginTop: 10}}
                                 onPress={() => {
-                                    
                                     if(allowLoc){
                                         setIsAddressModal(true); 
                                         setAddress("");
@@ -437,13 +446,7 @@ const StoreBasicChange = ({ navigation, route }) => {
                             <Postcode
                                 style={{  width: 350, height: 450 }}
                                 jsOptions={{ animated: true, hideMapBtn: true }}
-                                onSelected={data => {
-                                let ad = JSON.stringify(data.address).replace(/\"/g,'');
-                                setAddress(ad);
-                                setIsAddressModal(false);
-                                setIsChanging(true);
-                                _getLL(ad);
-                                }}
+                                onSelected={data => selectRegion(data)}
                             />
                         </View>
                     </Modal>
@@ -464,6 +467,14 @@ const StoreBasicChange = ({ navigation, route }) => {
                             handleConfirm={_setCloseTime} handleCancel={_hideCloseTimePicker}/>
 
                     </RowItemContainer>
+                    
+                    
+                    <ManageText 
+                        label="간단한 설명"
+                        value={ment}
+                        onChangeText={text => setMent(text)}
+                        placeholder="간단한 설명"
+                    />   
 
                     <RowItemContainer>
                         <DescTitle>업체 사진</DescTitle>
@@ -477,12 +488,10 @@ const StoreBasicChange = ({ navigation, route }) => {
 
                     </RowItemContainer>
 
-                    
                     <RowItemContainer>
                         <DescTitle>업체 유형</DescTitle>
                         <View style={{height: HEIGHT*0.05}} />
-                    </RowItemContainer>
-              
+                    </RowItemContainer>             
                 </InfoContainer>
                 <TypeContainer>
                         <DropDownPicker 

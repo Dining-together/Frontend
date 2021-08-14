@@ -12,8 +12,6 @@ import * as Location from "expo-location";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 import {changeListData} from "../utils/common";
 
-
-
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
 
@@ -161,13 +159,13 @@ right: 10px;
 justify-content: center;
 align-items: center;
 border-radius: 50px;
-border-width: 1px;
+background-color:  ${({ theme }) => theme.background};
 `;
 
 
 const RegisterAuction = ({navigation, route}) => {
-  const {allow, token} = useContext(LoginContext);
-  const {url} = useContext(UrlContext);
+  const {allow, token, setAllow} = useContext(LoginContext);
+  const {aurl} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [allowLoc, setAllowLoc] = useState(allow);
 
@@ -198,10 +196,9 @@ const RegisterAuction = ({navigation, route}) => {
     let auctionId = route.params.id;
     const [isChange, setIsChange] = useState(route.params.isChange);
     const [buttonPress, setButtonPress] = useState(false);
-
+  
     const [isLoading, setIsLoading] = useState(false);
 
-    
     //날짜 데이터
     const [BD, setBD] = useState("");
     const [BT, setBT] = useState("");
@@ -259,8 +256,8 @@ const _getLocPer = async () => {
 
     //현재 위치 
     const getLocation = async () => {
-        if(allow){
-          let location = await Location.getCurrentPositionAsync({}); 
+        if(allowLoc){
+          let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
           setLati(location.coords.latitude);
           setLongi(location.coords.longitude);
         }
@@ -286,7 +283,7 @@ const _getLocPer = async () => {
   const getKoreanLocation = async (lat, lng, api) => {
     let response = await fetch(api);
     let res = await response.json();
-    let result = convertKoreanLocation(res);
+    let result = await convertKoreanLocation(res);
     return result;
   };
 
@@ -313,8 +310,9 @@ const _getLocPer = async () => {
       const result = getLocation();
     }
   }, [allowLoc]);
+
   const handleApi = async () => {
-    let fixedUrl = url+"/auction";
+    let fixedUrl = aurl+"/auction";
 
     let Info = {
       content: additionalContent,
@@ -435,7 +433,7 @@ const _getLocPer = async () => {
 
     useEffect(()=> {
       setDisabled(errorMessage!=="" && !isLoading);
-    },[errorMessage,isLoading]);
+    },[errorMessage, isLoading]);
 
 
     useEffect(()=> {
@@ -568,6 +566,7 @@ const _getLocPer = async () => {
         const _handleBookDatePress =() => {
             setBookDateVisible(true);
         };
+
 
         const days=["일요일","월요일","화요일","수요일","목요일","금요일","토요일"];
 
@@ -714,9 +713,9 @@ const _getLocPer = async () => {
 
     });
     }
-  },[]);
+  },[route.params]);
 
-  
+
   useEffect(()=> {
     setIsLoading(false);
   },[additionalContent,endFullData,maxPrice,minPrice,bookFullData,foodType,title,meetingType,numOfPeople,selectedSex,selectedAge,loc])
@@ -724,7 +723,7 @@ const _getLocPer = async () => {
   // 수정 put 보내기
   const putApi = async () => {
 
-    let fixedUrl = url+"/auction/"+`${auctionId}`;
+    let fixedUrl = aurl+"/auction/"+`${auctionId}`;
 
     let Info = {
       content: additionalContent,
@@ -775,7 +774,7 @@ const _ChangeAuction = async() => {
       result = await f(_setData, putApi);
     }
 
-    
+
     if (!result) {
       alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
     }else {
@@ -806,7 +805,7 @@ const _ChangeAuction = async() => {
         setErrorMessage("아래 정보를 입력해주세요");
         setDisabled(true);
         setUploaded(false);
-        
+
         navigation.navigate("AuctionDetailStack", {isUser: true, id: auctionId });
       }else {
         alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
@@ -818,6 +817,7 @@ const _ChangeAuction = async() => {
     spinner.stop();
   }
 }
+
     return (
       <KeyboardAwareScrollView
         extraScrollHeight={20}
@@ -922,11 +922,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
                 if(foodType.includes("한식")){
                   let array = foodType.filter((el) => el !=="한식");
-                  setFoodType(array); setIsLoading(true);
+                  setFoodType(array);  setIsLoading(true);
                 }else {
                   let array = foodType.slice();
                   array.push("한식");
-                  setFoodType(array); setIsLoading(true);
+                  setFoodType(array);  setIsLoading(true);
                 }
             }}
             />
@@ -938,11 +938,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("양식")){
                 let array = foodType.filter((el) => el !=="양식");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("양식");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }
             }}
             />
@@ -954,11 +954,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("중식")){
                 let array = foodType.filter((el) => el !=="중식");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("중식");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }
             }}
             />
@@ -970,11 +970,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("일식")){
                 let array = foodType.filter((el) => el !=="일식");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("일식");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }
             }}
             />
@@ -986,11 +986,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("기타")){
                 let array = foodType.filter((el) => el !=="기타");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("기타");
-                setFoodType(array); setIsLoading(true);
+                setFoodType(array);  setIsLoading(true);
               }
             }}
             />
@@ -1004,6 +1004,7 @@ const _ChangeAuction = async() => {
                   <StyledTextInputs 
                 value={numOfPeople.toString()}
                 onChangeText={text => {setNumOfPeople(removeWhitespace(text)); setIsLoading(true);}}
+                autoCapitalize="none"
                 autoCapitalize="none"
                 keyboardType="number-pad"
                 autoCorrect={false}
@@ -1064,7 +1065,7 @@ const _ChangeAuction = async() => {
     <Marker
       coordinate={region}
       pinColor="blue"
-      onPress={() => {setSelectedLocation(region); getGeocodeAsync(region); setIsLoading(true);}}
+      onPress={() => {setSelectedLocation(region); getGeocodeAsync(region);  setIsLoading(true);}}
     />
 </MapView>
 <CurrentButton onPress= {()=> {
@@ -1078,7 +1079,7 @@ const _ChangeAuction = async() => {
     Alert.alert("Location Permission Error","위치 정보를 허용해주세요.");
   }
 }}>
-<MaterialCommunityIcons name="map-marker" size={30} color="black"/>
+<MaterialCommunityIcons name="apple-safari" size={30} color="black"/>
 </CurrentButton>
 </MapContainer>
 <Label style={{width: WIDTH*0.9, borderRadius: 5, borderWidth: 1, paddingLeft: 5, marginTop: 5, paddingTop: 10, paddingBottom: 10}}>
@@ -1113,13 +1114,15 @@ const _ChangeAuction = async() => {
            multiline
            />
           
+          
+
         </Container>
             <AdditionContainer></AdditionContainer>
         <Container>
           <InfoLabel>추가 정보</InfoLabel>
         <RadioContiner>
-           <DoubleLabel>평균 성별</DoubleLabel>
-            <DoubleLabel>평균 연령대</DoubleLabel>
+           <DoubleLabel>평균 연령대</DoubleLabel>
+            <DoubleLabel>평균 성별</DoubleLabel>
            </RadioContiner>
             <AddContainer>
            <DropDownPicker 

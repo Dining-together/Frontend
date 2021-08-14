@@ -86,7 +86,7 @@ const Item = React.memo(({item: {auctionId, auctioneers, content, createdDate, d
 });
 
 
-const Auction = ({navigation}) => {
+const AuctionFinished = ({navigation}) => {
     const theme = useContext(ThemeContext);
     const {token} = useContext(LoginContext);
     const {aurl} = useContext(UrlContext);
@@ -145,16 +145,8 @@ const Auction = ({navigation}) => {
         {label: "시군구 선택", value: "시군구 선택"},
     ]);
 
-    const filterDataList = (data) => {
-        var now = new Date().toJSON();
-        var nowdata = cutDateData(changeDateData(now));
-        
-        let res = data.filter((item) => cutDateData(changeDateData(item.deadline)) <= nowdata);
-        return res;
-    };
-
     const handleApi = async () => {
-        let fixedUrl = aurl+"/auction/auctions";
+        let fixedUrl = aurl+"/auction/auctions/end";
 
         let options = {
             method: 'GET',
@@ -169,7 +161,7 @@ const Auction = ({navigation}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            var list = filterDataList(res["list"]);
+            var list = res["list"];
             setAllData(list);
             setAuctionListData(list);
         }catch(error) {
@@ -232,12 +224,15 @@ const Auction = ({navigation}) => {
             list = _filterSelected2(list, selected2);
         }
 
-        if (selected3 !== null && selected3!=="전체"){
+        if (selected3 !== null){
             let l = selectsigungoo(selected3);
             let stateList = setRegionList(l, l.length);
             setList4(stateList);
-            list = _filterSelected3(list, selected3);
+            if(selected3!=="전체"){
+                list = _filterSelected3(list, selected3);
+            }
         }
+        
         if (selected4 !== null && selected4!=="전체") {
             list = _filterSelected3(list, selected4);
         }
@@ -360,4 +355,4 @@ const Auction = ({navigation}) => {
     );
 };
 
-export default Auction; 
+export default AuctionFinished; 

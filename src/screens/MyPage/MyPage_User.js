@@ -2,7 +2,10 @@ import React, {useContext, useState, useEffect} from 'react';
 import styled from "styled-components/native";
 import {MypageButton, ProfileImage, SmallButton} from "../../components";
 import {LoginContext, UrlContext, ProgressContext} from "../../contexts";
-import {Alert} from "react-native";
+import {Alert, Dimensions} from "react-native";
+
+const WIDTH = Dimensions.get("screen").width;
+const HEIGHT = Dimensions.get("screen").height;
 
 const Container = styled.View`
     background-color: ${({theme})=> theme.background};
@@ -26,7 +29,6 @@ const InfoContainer = styled.View`
 const ProfileContainer = styled.View`
     width: 100%;
     flex-direction: row;
-    align-self: flex-start;
     background-color: ${({theme})=> theme.background};
     justify-content: space-between;
     align-items: center;
@@ -36,16 +38,20 @@ const ProfileContainer = styled.View`
 const ProfileButton = styled.TouchableOpacity`
     justify-content: center;
     align-items: center;
-    
 `
+const ProfileNameButton = styled.TouchableOpacity`
+    width: ${WIDTH*0.5};
+    justify-content: center;
+    align-items: center;
+`
+
 const Username = styled.Text`
     font-size: 23px;
-    margin-left: 40px;
     font-weight: bold;
 `;
 
 const LogoutContainer = styled.View`
-width: 100%;
+    width: 100%;
     align-items: flex-end;
     justify-content: flex-start;
     margin-right: 20px;
@@ -57,10 +63,16 @@ const Mypage_User = ( {navigation} ) => {
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const [name, setName] = useState("");
-    
-    useEffect(()=>{
+    const [image, setImage] = useState("");
+     
+    useEffect(()=> {
         handleApi();
-    },[])
+        // 화면 새로고침
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            handleApi();
+        });
+        return willFocusSubscription;
+    },[]); 
 
     const handleApi = async () => {
     let fixedUrl = url+"/member/customer";
@@ -79,6 +91,7 @@ const Mypage_User = ( {navigation} ) => {
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
         setName(res.data.name);
+        setImage(res.data.path);
     }catch (error) {
         console.error(error);
       } finally {
@@ -94,13 +107,15 @@ const Mypage_User = ( {navigation} ) => {
                 <ProfileButton onPress={() => {
                     navigation.navigate("UserInfo");
                 }}>
-                    <ProfileImage />
+                     {(image !== "") && (
+                            <ProfileImage url={image}/>
+                        )}
                 </ProfileButton>
-                <ProfileButton onPress={() => {
+                <ProfileNameButton onPress={() => {
                     navigation.navigate("UserInfo");
                 }}>
                     <Username style={{color: name===""? "white" : "black"}}>{name}</Username>
-                </ProfileButton>
+                </ProfileNameButton>
                 </ProfileContainer>
                 <LogoutContainer>
                 <SmallButton title="로그아웃" containerStyle={{marginTop: 0}} 

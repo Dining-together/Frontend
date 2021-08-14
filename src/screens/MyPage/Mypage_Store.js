@@ -2,7 +2,10 @@ import React, { useState, useContext, useEffect } from 'react';
 import styled from "styled-components/native";
 import { MypageButton, ProfileImage, SmallButton } from '../../components'
 import {LoginContext, UrlContext, ProgressContext} from "../../contexts";
-import {Alert} from "react-native";
+import {Alert, Dimensions} from "react-native";
+
+const WIDTH = Dimensions.get("screen").width;
+const HEIGHT = Dimensions.get("screen").height;
 
 const Container = styled.View`
     background-color: ${({ theme }) => theme.background};
@@ -26,7 +29,6 @@ const InfoContainer = styled.View`
 const ProfileContainer = styled.View`
     width: 100%;
     flex-direction: row;
-    align-self: flex-start;
     background-color: ${({ theme }) => theme.background};
     justify-content: space-between;
     align-items: center;
@@ -38,9 +40,14 @@ const ProfileButton = styled.TouchableOpacity`
     align-items: center;
     
 `
+const ProfileNameButton = styled.TouchableOpacity`
+    width: ${WIDTH*0.5};
+    justify-content: center;
+    align-items: center;
+`
+
 const Username = styled.Text`
     font-size: 23px;
-    margin-left: 40px;
     font-weight: bold;
 `;
 
@@ -56,14 +63,19 @@ const Mypage_Store = ({ navigation }) => {
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const [name, setName] = useState("");
+    const [image, setImage] = useState("");
 
-
-    useEffect(()=>{
+    useEffect(()=> {
         handleApi();
-    },[])
+        // 화면 새로고침
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            handleApi();
+        });
+        return willFocusSubscription;
+    },[]); 
 
     const handleApi = async () => {
-    let fixedUrl = url+"/member/store/"+id;
+    let fixedUrl = url+"/member/store";
 
     let options = {
         method: 'GET',
@@ -79,6 +91,7 @@ const Mypage_Store = ({ navigation }) => {
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
         setName(res.data.name);
+        setImage(res.data.path);
     }catch (error) {
         console.error(error);
       } finally {
@@ -93,13 +106,15 @@ const Mypage_Store = ({ navigation }) => {
                     <ProfileButton onPress={() => {
                         navigation.navigate("StoreInfo");
                     }}>
-                        <ProfileImage />
+                        {(image !== "") && (
+                            <ProfileImage url={image}/>
+                        )}
                     </ProfileButton>
-                    <ProfileButton onPress={() => {
+                    <ProfileNameButton onPress={() => {
                         navigation.navigate("StoreInfo");
                     }}>
                        <Username style={{color: name===""? "white" : "black"}}>{name}</Username>
-                    </ProfileButton>
+                    </ProfileNameButton>
                 </ProfileContainer>
                 <LogoutContainer>
                     <SmallButton title={doc? "서류 변경" : "서류 등록"}
@@ -142,8 +157,8 @@ const Mypage_Store = ({ navigation }) => {
             </IconContainer>
             <IconContainer>
                 <MypageButton title='로그분석' name='insert-chart' 
-                    onPress={() => {
-                        navigation.navigate("LogManageTab");
+               onPress={() => {
+                navigation.navigate("LogManageTab");
                 }} />
                 <MypageButton title='채팅관리' name='chat' 
                     onPress={() => {

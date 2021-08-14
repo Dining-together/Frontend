@@ -117,7 +117,7 @@ const BidManage = ({navigation, route}) => {
             {id: item['auctionId'], isChange : true, title: item['title'], reservation: item['reservation'],
             groupType: item['groupType'], storeType: item['storeType'], groupCnt: item['groupCnt'], 
             maxPrice: item['maxPrice'], minPrice: item['minPrice'], addr: item['addr'], content: item['content'],
-            age: item['age'], gender: item['gender'], deadline: item['deadline'] });
+            age: item['age'], gender: item['gender'], deadline: item['deadline'], fix: true });
         }
         else{
             // 입찰 수정
@@ -249,13 +249,15 @@ const BidManage = ({navigation, route}) => {
             let res = await response.json();
             console.log(res['list']);
 
+            if(res.list!==undefined) {
             if(isUser){
                 setData(_setLatestList(_filterProceeding(res['list'])));
             } else {
                 setData(_setLatestList(_filterProceeding(res.list.auction)));
             }
+        }
+        console.log(res.list);
 
-            console.log(data);
 
             return res["success"];
 
@@ -281,6 +283,9 @@ const BidManage = ({navigation, route}) => {
 
     // 최신순
     const _setLatestList = (prev) => {
+        if(prev===undefined){
+            return;
+        }
         var res = prev.sort(function (a,b){
             return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
         });
@@ -288,26 +293,32 @@ const BidManage = ({navigation, route}) => {
     };
 
     const _filterProceeding = (prev) => {
-        let array = prev.filter((obj) => obj.status === 'PROCEEDING');
-        return array;
+        if(prev===undefined){
+            return;
+        }else{
+            let array = prev.filter((obj) => obj.status === 'PROCEEDING');
+            return array;
+        }
 };
 
 
     return (
         <Container>
             <BidContainer>
-                <FlatList
-                horizontal={false}
-                keyExtractor={item => item['auctionId'].toString()}
-                data={data} 
-                renderItem={({item}) => (
-                    <Item item={item} 
-                        isUser={isUser}
-                        onPress={()=> _onAuctionPress(item['auctionId'])}
-                        onChange={()=> _onChange(item)}
-                        onRemove={() => _onRemove(item['auctionId'])}
-                    />
-                )}/>
+                {data!==undefined && (
+                    <FlatList
+                    horizontal={false}
+                    keyExtractor={item => item['auctionId'].toString()}
+                    data={data} 
+                    renderItem={({item}) => (
+                        <Item item={item} 
+                            isUser={isUser}
+                            onPress={()=> _onAuctionPress(item['auctionId'])}
+                            onChange={()=> _onChange(item)}
+                            onRemove={() => _onRemove(item['auctionId'])}
+                        />
+                    )}/>
+                )}
             </BidContainer>
 
         </Container>

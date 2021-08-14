@@ -28,4 +28,4 @@ const AucLogManage = () => {
         </Container>
   );
 };
-export default AucLogManage; 
+export default AucLogManage;  

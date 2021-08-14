@@ -3,11 +3,18 @@ import { ThemeContext } from "styled-components/native";
 import { createStackNavigator } from '@react-navigation/stack';
 import { Mypage_Store, Mypage_User, StoreInfo, StoreInfoChange, UserInfo, UserInfoChange, StoreManage, ReviewManage
     ,ChatManage, Bookmark, Message, AuctionDetail, AuctionBid, PayManage, UseManage, ReviewWrite, DocumentRegister,
+<<<<<<< HEAD
     OrderDetail, StoreDetail, RegisterAuction, MultipleImage, StoreConvChange, StoreBasicChange  } from "../screens";
 import BidManageTab from './BidManageTab';
 import AuctionDetailStack from "./AuctionDetailStack";
 import LogManageTab from './LogManageTab';
+=======
+    OrderDetail, StoreDetail, RegisterAuction, MultipleImage, StoreConvChange, StoreBasicChange, AuctionBidDetail } from "../screens";
+import BidManageTab from './BidManageTab';
+import AuctionDetailStack from "./AuctionDetailStack";
+>>>>>>> 4a4b2c39a47cd57d0f4b14bfea79ca59de52ae05
 import {LoginContext} from "../contexts";
+import LogManageTab from './LogManageTab';
 
 
 const Stack = createStackNavigator();
@@ -55,7 +62,12 @@ const MypageStack = () => {
             <Stack.Screen name="StoreConvChange" component={StoreConvChange} options={{ headerTitle: "업체 편의정보 수정",headerBackTitle: false, }} />
             <Stack.Screen name="LogManageTab" component={LogManageTab} options={{ headerTitle: "로그 분석",headerBackTitle: false, }} />
             <Stack.Screen name="AuctionDetailStack" component={AuctionDetailStack} options={{headerShown: false}} />
+<<<<<<< HEAD
 
+=======
+            <Stack.Screen name="AuctionBidDetail" component={AuctionBidDetail}
+                options={{ headerBackTitle: false, headerTitle: "입찰 상세", headerTitleAlign: 'left' }} /> 
+>>>>>>> 4a4b2c39a47cd57d0f4b14bfea79ca59de52ae05
         </Stack.Navigator>
     );
 }

@@ -8,7 +8,7 @@ const LoginContext = createContext({
     doc: false,
     token: null,
     autoLogin: false,
-    id: null,
+    id : null,
     setSuccess: () => {},
     setAllow: () => {},
     setMode: () => {},
@@ -40,18 +40,18 @@ const LoginProvider = ({children}) => {
         setToken,
         autoLogin,
         setAutoLogin,
-        id, // userID
-        setId
+        id,
+        setId,
     };
 
-    const setData = (token, autoLogin,allow,mode,doc, id) => {
+    const setData = (token, autoLogin, allow, mode, doc, id) => {
         let data = {
             token: token,
             autoLogin: autoLogin,
             allow: allow,
             mode: mode,
             doc: doc,
-            id: id
+            id: id,
         };
         AsyncStorage.setItem('user_infomation', JSON.stringify(data));
         console.log(data);

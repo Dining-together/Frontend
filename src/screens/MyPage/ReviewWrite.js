@@ -1,8 +1,9 @@
 import React, {useState, useEffect, useContext, useLayoutEffect, useRef} from 'react';
 import styled from "styled-components/native";
 import {MaterialCommunityIcons} from "@expo/vector-icons";
-import {Dimensions,Text,View,ScrollView, TouchableOpacity} from "react-native";
+import {Dimensions,Text, View, ScrollView, TouchableOpacity} from "react-native";
 import { Button, SmallButton } from '../../components';
+
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
 
 const WIDTH = Dimensions.get("screen").width;
@@ -47,7 +48,6 @@ const ErrorText = styled.Text`
     color: ${({ theme }) => theme.errorText};
 `;
 
-
 const ReviewImages = ( { item: { uri }}) => {
     return (
         <ReviewImage source={{uri : uri}}/>
@@ -57,12 +57,13 @@ const ReviewImages = ( { item: { uri }}) => {
 
 const ReviewWrite = ({navigation, route}) => {
 
+    const [photos, setPhotos] = useState([]);
+
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const {token, doc, id} = useContext(LoginContext);
 
     const [content, setContent] = useState('');
-    const [photos, setPhotos] = useState([]);
     const [successBidId, setSuccessBidId] = useState(route.params.successBidId);
 
     const [starRating, setStarRating] = useState(0);
@@ -74,7 +75,7 @@ const ReviewWrite = ({navigation, route}) => {
     const [disabled, setDisabled] = useState(true);
 
     const didMountRef = useRef();
-   
+
     const Star = () => {
         return (
         <View style={{justifyContent: 'center', flexDirection: 'row',}}>
@@ -95,6 +96,7 @@ const ReviewWrite = ({navigation, route}) => {
     };
 
 
+
     useEffect(() => {
         if (route.params.photos) {
             setPhotos(route.params.photos);
@@ -102,8 +104,7 @@ const ReviewWrite = ({navigation, route}) => {
         }
       }, [route.params.photos, photos]);
 
-
-    //에러 메세지 설정 
+      //에러 메세지 설정 
     useEffect(() => {
         if (didMountRef.current) {
             let _errorMessage = "";
@@ -159,7 +160,7 @@ const ReviewWrite = ({navigation, route}) => {
                 'X-AUTH-TOKEN' : token,
             },
             body: formData,
-        
+
         };
         try {
             let response = await fetch(fixedUrl, options);
@@ -167,7 +168,7 @@ const ReviewWrite = ({navigation, route}) => {
 
             console.log(res);
             return res["success"];
-            
+
           } catch (error) {
             console.error(error);
           }
@@ -179,7 +180,7 @@ const ReviewWrite = ({navigation, route}) => {
         try{
             spinner.start();
             const result = await postApi();
-            
+
             if (!result) {
                 alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
               }else {
@@ -202,13 +203,15 @@ const ReviewWrite = ({navigation, route}) => {
             spinner.stop();
         }      
     }
-
+    
     const _onPhotoPress = () => {
         navigation.navigate("MultipleImage",{type: "Review"});
     }
 
+
     return (
         <Container>
+            
             <StarContainer>
                 <Text style={{fontSize: 23, marginRight: '2%'}}>별점</Text>
                 <Star />
@@ -224,6 +227,7 @@ const ReviewWrite = ({navigation, route}) => {
                 textContentType="none" // iOS only
                 underlineColorAndroid="transparent" // Android only
                 onChangeText={text => {setContent(text); setIsLoading(true);}}
+
             />
             {uploaded && disabled && <ErrorText>{errorMessage}</ErrorText>}
             <SmallButton 
@@ -231,6 +235,8 @@ const ReviewWrite = ({navigation, route}) => {
                 containerStyle ={{width: '25%', marginTop: '3%'}}
                 onPress={_onPhotoPress}
             />
+
+
             <ScrollView 
                 style={{margin : '2%', height: HEIGHT*0.13, }} 
                 contentContainerStyle={{paddingRight: 10, paddingLeft: 10, }}
@@ -241,12 +247,11 @@ const ReviewWrite = ({navigation, route}) => {
                 <ReviewImage key={item.id} source={{uri : item.uri}} />
                 )} 
             </ScrollView>
+    
             
             
         </Container>
     );
 };
-
-
 
 export default ReviewWrite;

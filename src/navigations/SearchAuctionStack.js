@@ -11,7 +11,7 @@ const SearchAuctionStack = ({navigation, route}) => {
 
     return (
         <Stack.Navigator>
-            <Stack.Screen name= "SearchAuction" component={SearchAuction} options={{headerShown: false}}/>
+            <Stack.Screen name= "SearchAuction" component={SearchAuction} options={{headerShown: false}} initialParams={route.params}/>
             <Stack.Screen name= "AuctionDetailStack" component={AuctionDetailStack} options={{headerShown: false}}/>
         </Stack.Navigator>
     );

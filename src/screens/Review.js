@@ -1,9 +1,11 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import styled from "styled-components/native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {MaterialCommunityIcons} from "@expo/vector-icons";
-import {Reviews} from "../utils/data";
+import {changeDateData} from "../utils/common";
 import {Dimensions} from "react-native";
+import {UrlContext, ProgressContext} from "../contexts";
+
 
 
 const WIDTH = Dimensions.get("screen").width;
@@ -28,6 +30,12 @@ const UserImage = styled.Image`
 `;
 
 const ReviewImage = styled.Image`
+    background-color:${({theme}) => theme.imageBackground};
+    width: ${WIDTH*0.98}px;
+    height: ${HEIGHT*0.3}px;
+`;
+
+const ReviewImageView = styled.View`
     background-color:${({theme}) => theme.imageBackground};
     width: ${WIDTH*0.98}px;
     height: ${HEIGHT*0.3}px;
@@ -92,36 +100,73 @@ const Stars = ({score}) => {
     return list;
 };
 
-const ReviewSet = ({review: {id, date, name, score, ment, src, userSrc}}) => {
+const ReviewSet = ({review: {content, createdDate, reviewImages, score, userName}}) => {
+    let images = reviewImages;
+    let path = images.length!==0? images[0].path : "";
     return (
         <InfoContainer>
-            <DefaultText>{date}</DefaultText>
+            <DefaultText>{changeDateData(createdDate)}</DefaultText>
             <UserInfoContainer>
                 <UserContainer>
-                    <UserImage source={{uri: userSrc}}/>
-                    <TitleText>{name}</TitleText>
+                    <TitleText>{userName}</TitleText>
                 </UserContainer>
                     <StarContainer>
                         <TitleText>별점: </TitleText>
                         <Stars score={score}/>
                     </StarContainer>
             </UserInfoContainer>
-            <ReviewImage source={{uri: src}}/>
-            <MentContainer><DefaultText>{ment}</DefaultText></MentContainer>
+            {path!=="" && (
+                <ReviewImage source={{uri: path}}/>
+            )}
+            <MentContainer><DefaultText>{content}</DefaultText></MentContainer>
         </InfoContainer>
     );
 };
 
 const Review = ({navigation, route}) => {
-   
-    
+    const {aurl} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const storeId = route.params.id;
+    const [reviews, setReviews] = useState([]);
+
+    const getReviewApi = async () => {
+        let fixedUrl= aurl+"/auction/reviews/store/"+storeId;
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+
+        };
+        try {
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            var l = res.list
+            if(l!==[]){
+                l.map(i => console.log(i.reviewImages));
+            }
+            setReviews(res.list);
+
+          } catch (error) {
+            console.error(error);
+          } finally {
+            spinner.stop();
+          }
+    };
+
+    useEffect(()=>{
+        getReviewApi();
+    },[]);
 
     return (
         <KeyboardAwareScrollView
         extraScrollHeight={20}>
             <List>
-               {Reviews.map(review => (
-                   <ReviewSet key={review['id'].toString()} review={review}/>
+               {reviews!==[] && reviews.map(review => (
+                   <ReviewSet key={review['reviewId']} review={review}/>
                ))} 
             </List>
         </KeyboardAwareScrollView>

@@ -3,11 +3,11 @@ import styled from "styled-components/native";
 import { IconButton } from "../components";
 import { images } from '../images';
 import { FlatList, ScrollView, Dimensions } from "react-native";
-import { popular, recomendedStore } from "../utils/data";
+import { popular, recomendedStore, StoreList } from "../utils/data";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ThemeContext } from "styled-components";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
-import {cutDateData, changeListData, createdDate, changeCreatedDateData} from "../utils/common";
+import {_sortLatest, cutDateData, changeListData, createdDate, changeCreatedDateData, removeWhitespace, _sortPopular} from "../utils/common";
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
@@ -59,12 +59,7 @@ const StyledTextInput = styled.TextInput.attrs(({ theme }) => ({
   `;
 
 const PopularView = styled.View`
-  flex: 4;
-  margin: 10px 0px;
-`;
-
-const RecommededView = styled.View`
-  flex: 4;
+  flex: 2;
   margin: 10px 0px;
 `;
 
@@ -80,18 +75,9 @@ const Desc = styled.Text`
   margin-right:  ${({ marginRight }) => marginRight ? marginRight : 0}px;
 `;
 
-// const StyledImage = styled.Image`
-//     margin-top: 3px;
-//     margin-bottom: 10px;
-//     background-color:${({ theme }) => theme.imageBackground};
-//     height: 80;
-//     width: 80;
-//     border-radius: ${({ rounded }) => (rounded ? 50 : 0)}px;
-// `;
-
-const StyledImage = styled.View`
+const StyledImage = styled.Image`
     margin-top: 3px;
-    margin-bottom: 3px;
+    margin-bottom: 10px;
     background-color:${({ theme }) => theme.imageBackground};
     height: 80;
     width: 80;
@@ -155,12 +141,11 @@ const LatestTime = styled.Text`
     color: ${({ theme, notTime }) => notTime? theme.text : theme.label}
 `;
 
-const Item = ({ item: {auctionId, auctioneers, content, createdDate, deadline, maxPrice, minPrice, reservation, status, storeType, title, updatedDate, userName, groupType, groupCnt, addr, age, gender}, onPress, latest }) => {
+const Item = React.memo(({ item: {auctionId, auctioneers, content, createdDate, deadline, maxPrice, minPrice, reservation, status, storeType, title, updatedDate, userName, groupType, groupCnt, addr, age, gender, path}, onPress, latest }) => {
     return (
         latest ? (
             <RowItemContainer onPress={onPress}>
-                {/* <StyledImage source={{ uri: src }} rounded={true} /> */}
-                <StyledImage rounded={true} />
+                <StyledImage source={{ uri: path }} rounded={true} />
                 <RowDescContainer>
                     <LatestTitle>{title}</LatestTitle>
                     <LatestTime notTime>{groupType} {groupCnt}명</LatestTime>
@@ -175,8 +160,7 @@ const Item = ({ item: {auctionId, auctioneers, content, createdDate, deadline, m
             : (
                 <ItemContainer onPress={onPress} >
                     <ImageContainer>
-                        {/* <StyledImage source={{ uri: src }} rounded={true} /> */}
-                        <StyledImage rounded={true} />
+                        <StyledImage source={{ uri: path }} rounded={true} />
                     </ImageContainer>
                     <DescContainer>
                         <Desc>{title}</Desc>
@@ -186,14 +170,13 @@ const Item = ({ item: {auctionId, auctioneers, content, createdDate, deadline, m
                 </ItemContainer>
             )
     );
-};
+});
 
-const Store = ({ item: { id, storeName, score, reviews, foodType, src }, onPress, theme }) => {
+const Store = ({ item: { id, storeName, score, reviews, foodType, path }, onPress, theme }) => {
     return (
         <ItemContainer onPress={onPress} >
             <ImageContainer>
-                {/* <StyledImage source={{ uri: src }} rounded={false} /> */}
-                <StyledImage />
+                <StyledImage source={{ uri: path }} rounded={false} />
             </ImageContainer>
             <DescContainer>
                 <Desc>{storeName}</Desc>
@@ -211,20 +194,21 @@ const Store = ({ item: { id, storeName, score, reviews, foodType, src }, onPress
 
 const Main = ({ navigation }) => {
     const theme = useContext(ThemeContext);
-    const {aurl, url} = useContext(UrlContext);
+    const { aurl, url} = useContext(UrlContext);
     const {allow, autoLogin, doc, mode, token} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
 
     const [input, setInput] = useState("");
     const [isFocused, setIsFocused] = useState(false);
-    const [auctionData, setAuctionData] = useState("");
-    const [latestAuctions, setLatestAuctions] = useState("");
+    const [auctionData, setAuctionData] = useState("first");
+    const [latestAuctions, setLatestAuctions] = useState("first");
+    const [popularAuctions, setPopularAuctions] = useState("first");
     const [isLoading, setIsLoading] = useState(true);
 
     const _handleNoticePress = () => { navigation.navigate("Notice") };
 
     const _handleSearchPress = () => { 
-        navigation.navigate("SearchTab", {input: input});
+        navigation.navigate("SearchTab", {input: removeWhitespace(input)});
         setInput("");
      };
 
@@ -253,7 +237,10 @@ const Main = ({ navigation }) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            setAuctionData(res["list"]);
+            var a = await _sortLatest(res.list);
+            var b = await _sortPopular(res.list);
+            setLatestAuctions(a.reverse().slice(0,10));
+            setPopularAuctions(b.slice(0,10));
         }catch(error) {
             console.error(error);
         }finally {
@@ -262,23 +249,10 @@ const Main = ({ navigation }) => {
         }
     };
 
-    const _setLatestAuctionList = () => {
-        var res = auctionData.sort(function (a,b){
-            return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
-        });
-        setLatestAuctions(res);
-    };
-   
-
     useEffect(()=> {
         handleAuctionApi();
     },[]);
 
-    useEffect(() => {
-        if(auctionData !== ""){
-            _setLatestAuctionList();
-        }
-    },[auctionData]);
 
     return (
         <BackCon>
@@ -288,7 +262,7 @@ const Main = ({ navigation }) => {
                         value={input}
                         isFocused={isFocused}
                         onChangeText={text => setInput(text)}
-                        onSubmitEditing={_handleSearchPress}
+                        onSubmitEditing={() =>_handleSearchPress()}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="검색하세요."
@@ -304,61 +278,28 @@ const Main = ({ navigation }) => {
                 </IconContainer>
             </Header>
 
-            {!isLoading && <FlatList 
-                ListHeaderComponent={
-                <>
-                            
+            {!isLoading &&
+                <>       
                 <PopularView>
                     <Title isLoading={isLoading}>실시간 인기 공고</Title>
-                    <FlatList
-                        horizontal={true}
-                        showsHorizontalScrollIndicator={false}
-                        keyExtractor={item => item['auctionId'].toString()}
-                        data={latestAuctions}
-                        renderItem={({ item }) => (
-                            <Item item={item} onPress={() => _handleItemPress(item)} />
-                        )} />
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+                        {popularAuctions!=="first" && popularAuctions.map(item => (
+                            <Item item={item} onPress={() => _handleItemPress(item)} key={item.id}/>
+                        ))}
+                    </ScrollView>
                 </PopularView>
 
-            <RecommededView>
-                    {(mode==="CUSTOMER")
-                        ? (<>
-                            <Title isLoading={isLoading}>사용자 추천 가게</Title>
-                            <FlatList
-                                horizontal={true}
-                                showsHorizontalScrollIndicator={false}
-                                keyExtractor={item => item['id'].toString()}
-                                data={recomendedStore}
-                                renderItem={({ item }) => (
-                                    <Store item={item} theme={theme} onPress={() => _handleStorePress(item)} />
-                                )} />
-                        </>
-                        )
-                        : (<>
-                            <Title isLoading={isLoading}>사용자 추천 공고</Title>
-                            <FlatList
-                                horizontal={true}
-                                showsHorizontalScrollIndicator={false}
-                                keyExtractor={item => item['auctionId'].toString()}
-                                data={latestAuctions}
-                                renderItem={({ item }) => (
-                                    <Item item={item} onPress={() => _handleItemPress(item)} />
-                                )} />
-                            </>
-                    )}
-            </RecommededView>
 
                 <LatestView>
                     <Title isLoading={isLoading}>실시간 최신 공고</Title>
+                    <ScrollView>
+                        {latestAuctions!=="first" && latestAuctions.map(item => (
+                            <Item item={item} onPress={() => _handleItemPress(item)} latest={true} key={item.id}/>
+                        ))}
+                    </ScrollView>
                  </LatestView>
-                </> }
-                        horizontal={false}
-                        showsVerticalScrollIndicator={false}
-                        keyExtractor={item => item['auctionId'].toString()}
-                        data={latestAuctions.slice(0,10)}
-                        renderItem={({ item }) => (
-                            <Item item={item} onPress={() => _handleItemPress(item)} latest={true} />
-                        )} />}
+                      
+                </>}
               
 
 

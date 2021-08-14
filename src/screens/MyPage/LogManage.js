@@ -28,4 +28,4 @@ const LogManage = () => {
         </Container>
   );
 };
-export default LogManage; 
+export default LogManage;  

@@ -22,4 +22,8 @@ const BidManageTab = ({route}) => {
     );
 };
 
+<<<<<<< HEAD
 export default BidManageTab; 
+=======
+export default BidManageTab;  
+>>>>>>> 4a4b2c39a47cd57d0f4b14bfea79ca59de52ae05

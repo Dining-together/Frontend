@@ -11,7 +11,7 @@ const SearchStoreStack = ({navigation, route}) => {
 
     return (
         <Stack.Navigator>
-            <Stack.Screen name= "SearchStore" component={SearchStore} options={{headerShown: false}}/>
+            <Stack.Screen name= "SearchStore" component={SearchStore} options={{headerShown: false}} initialParams={route.params}/>
             <Stack.Screen name= "StoreDetailStack" component={StoreDetailStack} options={{headerShown: false}}/>
         </Stack.Navigator>
     );

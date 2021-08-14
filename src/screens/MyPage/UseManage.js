@@ -4,7 +4,6 @@ import {FlatList} from 'react-native';
 import { SmallButton } from '../../components';
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
 
-
 const UseContainer = styled.View`
     flex-direction: row;
     padding: 15px;
@@ -71,7 +70,7 @@ const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, o
                         disabled={review}
                         uploaded={review}
                         />
-
+                    
                 </ButtonContainer>
             </TextContainer>
 
@@ -81,7 +80,6 @@ const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, o
 
 
 const UseManage = ({navigation}) => {
-
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const {token} = useContext(LoginContext);
@@ -118,8 +116,8 @@ const UseManage = ({navigation}) => {
           }
     }
 
+
     useEffect( () => {
-        // 낙찰공고 불러오기
         getApi(url+"/auction/user/bids");
 
         // 화면 새로고침
@@ -132,8 +130,8 @@ const UseManage = ({navigation}) => {
     }, []);
 
     const _onReviewPress = item => {
-        var today = new Date().toJSON();;
-        
+        var today = new Date().toJSON();
+
         if(item.reservation < today){
             navigation.navigate("ReviewWrite", {successBidId : item['successBidId']});
         }
@@ -141,6 +139,7 @@ const UseManage = ({navigation}) => {
             alert("예약 시간 후에 리뷰를 작성할 수 있습니다.");
         }
     };
+
 
     return (
         <FlatList 
@@ -150,6 +149,7 @@ const UseManage = ({navigation}) => {
             renderItem={({item}) => (
                 <Item item={item} 
                     onReviewPress={() => _onReviewPress(item)}
+                    onUseDetail={() => _onUseDetail(item)}
                 />
 
         )}/>                

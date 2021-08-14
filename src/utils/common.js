@@ -149,4 +149,20 @@ export const _changeTypeKorean = (type) => {
             text = "기타"; break;
     }
     return text;
-}
+} 
+
+export const _sortLatest = (a) => {
+    var list = a.slice();
+    list.sort(function (a,b){
+        return a.createdDate - b.createdDate;
+    });
+    return list;
+};
+
+export const _sortPopular = (a) => {
+    var list = a.slice();
+    list.sort(function (a,b){
+        return b.auctioneers.length - a.auctioneers.length;
+    });
+    return list;
+};

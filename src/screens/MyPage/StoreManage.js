@@ -87,14 +87,16 @@ const StoreManage = ({ navigation }) => {
     const {spinner} = useContext(ProgressContext);
     const {token, doc, id} = useContext(LoginContext);
 
+
     // 업체 기본정보
-    const [phoneNumber, setPhoneNumber] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("first");
     const [address, setAddress] = useState("");
     const [storeType, setStoreType] = useState("");
     const [openTime, setOpeningTime] = useState('');
     const [closeTime, setClosingTime] = useState('');
     const [lat, setLat] = useState("");
     const [lon, setLon] = useState("");
+    const [ment, setMent] = useState("");
 
     // 업체 메뉴 리스트
     const [menus, setMenus] = useState([]);
@@ -125,7 +127,7 @@ const StoreManage = ({ navigation }) => {
         navigation.navigate("StoreBasicChange",
         { phoneNumber: phoneNumber, address: address, storeType: storeType, 
             openTime: setTime(openTime), closeTime: setTime(closeTime), selectedType: storeType,
-            openT: openTime, closeT: closeTime, lat: lat, lon: lon});
+            openT: openTime, closeT: closeTime, lat: lat, lon: lon, ment: ment});
     };
 
     // 업체 편의정보 수정 
@@ -177,7 +179,6 @@ const StoreManage = ({ navigation }) => {
             spinner.start();
             let response = await fetch(url,options);
             let res = await response.json();
-
             return res;
 
           } catch (error) {
@@ -190,12 +191,10 @@ const StoreManage = ({ navigation }) => {
     // 업체 정보들 불러오기
     const infoGet = async () => {
         let fixedUrl =url+'/member/store/'+`${id}`;
-        console.log(fixedUrl);
 
         try{
             spinner.start();
             const res =  await getApi(fixedUrl);
-
 
             if(res.success){
                 // 기본정보 등록되어있으면 값 바꿈
@@ -207,6 +206,7 @@ const StoreManage = ({ navigation }) => {
                     setClosingTime(res.data.closedTime);
                     setLat(res.data.latitude);
                     setLon(res.data.longitude);
+                    setMent(res.data.comment);
                 }
                 // 편의정보 등록되어있으면 값 바꿈
                 if(res.data.facility != null){
@@ -470,7 +470,8 @@ const StoreManage = ({ navigation }) => {
             <KeyboardAwareScrollView
                 extraScrollHeight={20}
             >
-                {/* 업체 기본정보 */}
+                {phoneNumber!=="" && (
+                    <>
                 <View style={{marginLeft: 10}}>
                     <DescTitle size={23}>업체 기본정보</DescTitle>
                     <DescTitle size={12}>(기본 정보가 입력되어야 업체 조회 리스트에 등록됩니다.)</DescTitle>
@@ -480,7 +481,7 @@ const StoreManage = ({ navigation }) => {
                         label="업체 전화번호"
                         TextChange
                         onChangePress={_onBasicPress}
-                        value={phoneNumber}
+                        value={phoneNumber!== "first"? phoneNumber: ""}
                         editable={false}
                     />
                     <ManageText 
@@ -491,6 +492,11 @@ const StoreManage = ({ navigation }) => {
                     <ManageText 
                         label="영업시간"
                         value={openTime !== '' ? setTime(openTime)+" ~ "+setTime(closeTime) : ""}
+                        editable={false}
+                    />
+                    <ManageText 
+                        label="간단한 설명"
+                        value={ment}
                         editable={false}
                     />
                     <RowItemContainer>
@@ -595,8 +601,8 @@ const StoreManage = ({ navigation }) => {
                         text={_setList()}
                     />
                     
-                </InfoContainer>
-                
+                </InfoContainer></>
+                )}
             </KeyboardAwareScrollView>
         </Container>
 

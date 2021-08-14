@@ -135,7 +135,7 @@ const StarContainer = styled.View`
 `;
 
 const ReviewButton = styled.TouchableOpacity`
-
+    flex-direction: row;
 `;
 
 
@@ -150,6 +150,28 @@ const StoreDetail = ({navigation, route}) => {
     const [indexSelected, setIndexSelected] = useState(0);
     const [data, setData] = useState([]);
     const [isLoading, setISLoading] = useState(false);
+
+    const Stars = ({score}) => {
+        var list = [];
+        var one = parseInt(score);
+        var half = parseInt(score/0.5); 
+        let i = 0;
+        if(score % 2 == 0){
+            for(i = 0; i<one;i++)
+            {
+                list.push(<MaterialCommunityIcons name="star" size={25} color="yellow"/>)
+            }
+        }else {
+            for(i = 0; i<one;i++)
+            {
+                list.push(<MaterialCommunityIcons name="star" size={25} color="yellow"/>)
+            }
+            if((half - one*2) !== 0){
+                list.push(<MaterialCommunityIcons name="star-half" size={25} color="yellow"/>)
+            }
+        }
+        return list;
+    };
 
     // 업체유형 한글로 변환
     const _changeType = (type) => {
@@ -201,8 +223,9 @@ const StoreDetail = ({navigation, route}) => {
         return (h+"시 "+m+"분");
     };
 
-    const StoreImage = ({item: {id, src, des}, onStarPress, isStar,theme, onReviewPress}) => {
+    const StoreImage = ({item: {id, src, des}, onStarPress, isStar,theme, onReviewPress, reviewAvg, reviewCnt}) => {
         const {mode} = useContext(LoginContext);
+        let score = Math.round(reviewAvg * 10)/10
         return (
             <>
                 {/* <StyledImage source={{uri: src}} /> */}
@@ -223,11 +246,11 @@ const StoreDetail = ({navigation, route}) => {
                 <DesContainer>
                     <DesTextBox>
                         <Title>{storeName}</Title>
-                        <ReviewButton onPress={onReviewPress}><Title>리뷰 별점</Title></ReviewButton>
+                        <ReviewButton onPress={onReviewPress}><Stars score={score}/></ReviewButton>
                     </DesTextBox>
                     <DesTextBox>
                         <DesText>{storeType}</DesText>
-                        <ReviewButton onPress={onReviewPress}><DesText>리뷰 수</DesText></ReviewButton>
+                        <ReviewButton onPress={onReviewPress}><DesText>{reviewCnt}개의 리뷰</DesText></ReviewButton>
                     </DesTextBox>
                 </DesContainer>
             </>
@@ -251,7 +274,11 @@ const StoreDetail = ({navigation, route}) => {
     const [facilities, setFacilities] = useState([]);
     const [capacity, setCapacity]=useState(null);
     const [changedFac, setChangedFac] = useState(null);
-
+    const [comment, setComment] = useState(null);
+    const [reviewAvg, setReviewAvg] = useState(null);
+    const [reviewCnt, setReviewCnt]= useState(null) ;
+    const [pic, setPic] = useState();
+    const [menuPics, setPics] = useState([]);
     const _handleFacilities = () => {
         if(facilities===[]){
             return null;
@@ -283,6 +310,7 @@ const StoreDetail = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
+            console.log(res);
             let menuResponse = await fetch(menuUrl, options);
             let menuRes = await menuResponse.json();
             setStoreName(res.data.name);
@@ -292,6 +320,9 @@ const StoreDetail = ({navigation, route}) => {
             setPhoneNumber(res.data.phoneNum);
             setOpenTime(setTime(res.data.openTime));
             setCloseTime(setTime(res.data.closedTime));
+            setComment(res.data.comment);
+            setReviewAvg(res.data.reviewAvg);
+            setReviewCnt(res.data.reviewCnt);
             var uploaded = (res.data.facility===null);
             if(!uploaded){
                 setParking(res.data.facility.parking);
@@ -319,9 +350,11 @@ const StoreDetail = ({navigation, route}) => {
     // 즐겨찾기 여부
     useEffect( () => {
         getApi();
-        let list = data.map( item => item.storeId);
-        if(list.includes(id)){
+        if(data!==undefined){
+            let list = data.map(item => item.storeId);
+            if(list.includes(id)){
             setIsStar(true);
+        }
         }
     },[isLoading]);
 
@@ -341,7 +374,7 @@ const StoreDetail = ({navigation, route}) => {
         });
     }, []);
 
-    
+
     // 즐겨찾기 list 가져오기
     const getApi = async () => {
         let fixedUrl = url+"/member/favorites/customer";
@@ -362,8 +395,6 @@ const StoreDetail = ({navigation, route}) => {
 
             setData(res.list);
 
-            //console.log(data);
-            
             return (res.success);
 
           } catch (error) {
@@ -396,7 +427,7 @@ const StoreDetail = ({navigation, route}) => {
 
             console.log(res);
             return res["success"];
-        
+
             } catch (error) {
             console.error(error);
         }    
@@ -448,7 +479,7 @@ const StoreDetail = ({navigation, route}) => {
             else{
                 result = await postApi(id);
             }
-            
+
             if(!result){
                 alert("다시 시도해주세요");
             }
@@ -461,8 +492,6 @@ const StoreDetail = ({navigation, route}) => {
             spinner.stop();
         }
     }
-
-    
    
      return (
         <KeyboardAwareScrollView
@@ -475,7 +504,8 @@ const StoreDetail = ({navigation, route}) => {
            ref={carouselRef}
            data={photos}
            renderItem={({item}) => (
-                <StoreImage item={item} onReviewPress={_onReviewPress} onStarPress={() => _onStarPress(id)} isStar={isStar} theme={theme} />
+                <StoreImage item={item} onReviewPress={_onReviewPress} onStarPress={() => _onStarPress(id)} isStar={isStar} theme={theme} 
+                reviewAvg={reviewAvg} reviewCnt={reviewCnt}/>
             )}
             sliderWidth={WIDTH}
             itemWidth={WIDTH}
@@ -501,9 +531,9 @@ const StoreDetail = ({navigation, route}) => {
             ):null}
 
             {menus.map(menu => (
-                <InfoBox isFirst={menu.menuId===1}>
+                <InfoBox isFirst={menus.indexOf(menu)==0} key={menu.menuId}>
                     <InfoTextContainer>
-                        <FirstInfo><InfoText>{menu.menuId===1? "메뉴" : ""}</InfoText></FirstInfo>
+                        <FirstInfo><InfoText>{menus.indexOf(menu)==0? "메뉴" : ""}</InfoText></FirstInfo>
                         <SecondInfo><InfoText>{menu.name}</InfoText></SecondInfo>
                         <ThirdInfo><InfoText>{String(menu.price)+"원"}</InfoText></ThirdInfo>
                     </InfoTextContainer>
@@ -531,7 +561,7 @@ const StoreDetail = ({navigation, route}) => {
                 <InfoTextContainer>
                     <FirstInfo><InfoText>영업시간</InfoText></FirstInfo>
                     <SecondInfo double><InfoText></InfoText></SecondInfo>
-                    <ThirdInfo double><InfoText>{openTime} ~ {closeTime}</InfoText></ThirdInfo>
+                    <ThirdInfo double><InfoText>{openTime===null? "" : `${openTime} ~ ${closeTime}`}</InfoText></ThirdInfo>
                </InfoTextContainer>
            </InfoBox>
 
@@ -576,14 +606,14 @@ const StoreDetail = ({navigation, route}) => {
            
             <InfoBox isFirst={true}>
                     <InfoTextContainer>
-                    <FirstInfo><InfoText>추가 설명</InfoText></FirstInfo>
+                    <FirstInfo><InfoText>간단한 한마디</InfoText></FirstInfo>
                     <SecondInfo><InfoText></InfoText></SecondInfo>
                     <ThirdInfo><InfoText></InfoText></ThirdInfo>
                     </InfoTextContainer>
             </InfoBox>
             <InfoBox isLast={true}>
                 <DescInfoContainer>
-                    <InfoText>{text}</InfoText>
+                    <InfoText>{comment}</InfoText>
                 </DescInfoContainer>
                 
             </InfoBox>

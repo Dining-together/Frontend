@@ -28,4 +28,4 @@ const BidLogManage = () => {
         </Container>
   );
 };
-export default BidLogManage; 
+export default BidLogManage;  

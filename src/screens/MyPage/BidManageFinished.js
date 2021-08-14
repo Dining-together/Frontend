@@ -118,11 +118,12 @@ const BidManageFinished = ({navigation, route}) => {
             let res = await response.json();
             console.log(res);
 
+            if(res.list!==undefined){
             if(isUser){
                 setData(_setLatestList(_filterProceeding(res['list'])));
             } else {
                 setData(_setLatestList(_filterProceeding(res.list.auction)));
-            }
+            }}
 
             return res["success"];
 
@@ -141,6 +142,9 @@ const BidManageFinished = ({navigation, route}) => {
 
     // 최신순
     const _setLatestList = (prev) => {
+        if(prev===undefined){
+            return;
+        }
         var res = prev.sort(function (a,b){
             return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
         });
@@ -148,8 +152,12 @@ const BidManageFinished = ({navigation, route}) => {
     };
 
     const _filterProceeding = (prev) => {
-        let array = prev.filter((obj) => obj.status.includes('END') === true);
-        return array;
+        if(prev===undefined){
+            return;
+        }else{
+            let array = prev.filter((obj) => obj.status.includes('END') === true);
+            return array;
+        }
 };
     return (
         <Container>

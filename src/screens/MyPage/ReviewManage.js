@@ -5,7 +5,6 @@ import {Dimensions, FlatList, Alert} from "react-native";
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
 import {changeDateData, cutDateData} from "../../utils/common";
 
-
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
 
@@ -32,7 +31,6 @@ const ReviewImage = styled.Image`
     background-color:${({theme}) => theme.imageBackground};
     width: ${({width}) => width ? width : WIDTH*0.49}px;
     height: ${({height}) => height ? height : HEIGHT*0.3}px;
-    
 `;
 
 const DefaultText = styled.Text`
@@ -137,7 +135,7 @@ const ReviewImageSet = ({reviewImages}) => {
                     </>
                 </Row>);
                 break;
-            case 4:
+                case 4:
                 show=
                 (<Row>
                     <>
@@ -149,7 +147,7 @@ const ReviewImageSet = ({reviewImages}) => {
                         <ReviewImage key={3} source={{uri: reviewImages[3].path}} height = {HEIGHT*0.15}/>
                     </>
                 </Row>);
-                
+
         }
         return show;
     }
@@ -159,12 +157,14 @@ const ReviewImageSet = ({reviewImages}) => {
 };
 
 
-const ReviewSet = ({review: {reviewId, createdDate, userName, score, content, path, userSrc, reviewImages}, onRemove, isUser }) => {
+
+const ReviewSet = ({review: {reviewId, createdDate, userName, score, content, path, userSrc, reviewImages}, onChange, onRemove, isUser }) => {
     return (
         <InfoContainer>
             <DefaultText>{changeDateData(createdDate)}</DefaultText>
             { isUser &&
             <ChangeContainer>
+                {/* <ChangeText onPress={onChange}>수정</ChangeText> */}
                 <ChangeText onPress={onRemove}>삭제</ChangeText>
             </ChangeContainer> }
             <UserInfoContainer>
@@ -189,14 +189,19 @@ const ReviewManage = ({navigation, route}) => {
     const {token,  id} = useContext(LoginContext);
 
     const [reviews, setReviews] = useState([]);
+
     const [isUser, setIsUser] = useState(route.params.isUser);
 
     // 최신순
     const _setLatestList = (prev) => {
-        var res = prev.sort(function (a,b){
-            return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
-        });
-        return res;
+        if(prev!==undefined){
+            prev = prev.sort(function (a,b){
+                return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
+            });
+        }else {
+            prev = [];
+        }
+        return prev;
     };
 
     // 리뷰 가져오기
@@ -230,8 +235,8 @@ const ReviewManage = ({navigation, route}) => {
           }
     }
 
-    // 리뷰 삭제 delete 처리
-    const deleteApi = async (url) => {
+     // 리뷰 삭제 delete 처리
+     const deleteApi = async (url) => {
 
         console.log(url);
 
@@ -293,6 +298,7 @@ const ReviewManage = ({navigation, route}) => {
     useEffect( () => {
         getApi();
     }, []);
+
 
     return (
         <FlatList 
