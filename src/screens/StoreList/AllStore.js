@@ -1,10 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
 import styled from "styled-components/native";
-<<<<<<< HEAD:src/screens/Store.js
-import {Text, Dimensions, FlatList, View, ScrollView, Alert} from "react-native";
-=======
 import {Dimensions, View, ScrollView, Alert} from "react-native";
->>>>>>> ae2fb5530c3b4d1399313a2f18458c440e5cfcce:src/screens/StoreList/AllStore.js
 import { ThemeContext } from "styled-components";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
