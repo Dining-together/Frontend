@@ -200,9 +200,7 @@ const Bookmark = ({navigation, route}) => {
 
             newadd.push(auction);
 
-            setStores(newadd);
-
-            setAuctions(auction);
+            setAuctions(newadd);
 
             return res["success"];
 
