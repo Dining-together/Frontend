@@ -141,7 +141,10 @@ const Mypage_Store = ({ navigation }) => {
                 }}/>
             </IconContainer>
             <IconContainer>
-                <MypageButton title='로그분석' name='insert-chart' />
+                <MypageButton title='로그분석' name='insert-chart' 
+                    onPress={() => {
+                        navigation.navigate("LogManageTab");
+                }} />
                 <MypageButton title='채팅관리' name='chat' 
                     onPress={() => {
                         navigation.navigate("ChatManage");
