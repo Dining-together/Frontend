@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState, useEffect, useRef, useContext} from 'react';
 import styled from "styled-components/native";
 import {MaterialCommunityIcons} from "@expo/vector-icons";
-import {DateTimePicker,  RadioButton} from "../components";
+import {CheckBoxLetter, DateTimePicker,  RadioButton} from "../components";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {removeWhitespace} from "../utils/common";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -10,6 +10,8 @@ import { theme } from '../theme';
 import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from "expo-location";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
+import {changeListData} from "../utils/common";
+
 
 
 const WIDTH = Dimensions.get("screen").width;
@@ -163,9 +165,9 @@ border-width: 1px;
 `;
 
 
-const RegisterAuction = ({navigation}) => {
+const RegisterAuction = ({navigation, route}) => {
   const {allow, token} = useContext(LoginContext);
-  const {aurl} = useContext(UrlContext);
+  const {url} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [allowLoc, setAllowLoc] = useState(allow);
 
@@ -191,11 +193,15 @@ const RegisterAuction = ({navigation}) => {
     const [additionalContent, setAdditionalContent] = useState("");
     const didMountRef = useRef();
     const [foodType, setFoodType] = useState([]);
-    let bookFullData = "";
-    let endFullData = "";
-    let auctionId = "";
+    let bookFullData = route.params.reservation;
+    let endFullData = route.params.deadline;
+    let auctionId = route.params.id;
+    const [isChange, setIsChange] = useState(route.params.isChange);
     const [buttonPress, setButtonPress] = useState(false);
-  
+
+    const [isLoading, setIsLoading] = useState(false);
+
+    
     //날짜 데이터
     const [BD, setBD] = useState("");
     const [BT, setBT] = useState("");
@@ -307,9 +313,8 @@ const _getLocPer = async () => {
       const result = getLocation();
     }
   }, [allowLoc]);
-
   const handleApi = async () => {
-    let fixedUrl = aurl+"/auction";
+    let fixedUrl = url+"/auction";
 
     let Info = {
       content: additionalContent,
@@ -372,30 +377,30 @@ const _getLocPer = async () => {
           _errorMessage = "선호 메뉴을 입력하세요";
         }else if(!numOfPeople){
           _errorMessage = "인원 수를 입력하세요";
-        }else if(numOfPeople.includes(","))
+        }else if(String(numOfPeople).includes(","))
         {
           _errorMessage = "인원 수를 제대로 입력하세요";
-        }else if(numOfPeople.includes("."))
+        }else if(String(numOfPeople).includes("."))
         {
           _errorMessage = "인원 수를 제대로 입력하세요";
         }else if (parseInt(numOfPeople)< 1) {
           _errorMessage = "인원 수를 제대로 입력하세요";
         } else if(!minPrice){
           _errorMessage = "선호가격대의 최소 가격을 입력하세요";
-        }else if(minPrice.includes(","))
+        }else if(String(minPrice).includes(","))
         {
           _errorMessage = "최소 가격을 제대로 입력하세요";
-        }else if(minPrice.includes("."))
+        }else if(String(minPrice).includes("."))
         {
           _errorMessage = "최소 가격을 제대로 입력하세요";
         }else if(parseInt(minPrice) <0){
           _errorMessage = "최소 가격을 제대로 입력하세요";
         }else if(!maxPrice){
           _errorMessage = "선호가격대의 최대 가격을 입력하세요";
-        }else if(maxPrice.includes(","))
+        }else if(String(maxPrice).includes(","))
         {
           _errorMessage = "최대 가격을 제대로 입력하세요";
-        }else if(maxPrice.includes("."))
+        }else if(String(maxPrice).includes("."))
         {
           _errorMessage = "최대 가격을 제대로 입력하세요";
         }else if (parseInt(maxPrice) <0) {
@@ -429,8 +434,8 @@ const _getLocPer = async () => {
     },[title, bookDate,bookTime,endDate,endTime,foodType,numOfPeople,minPrice, maxPrice,selectedLocation,book,end, additionalContent, meetingType, selectedAge, selectedSex,loc]);
 
     useEffect(()=> {
-      setDisabled(errorMessage!=="");
-    },[errorMessage]);
+      setDisabled(errorMessage!=="" && !isLoading);
+    },[errorMessage,isLoading]);
 
 
     useEffect(()=> {
@@ -520,7 +525,7 @@ const _getLocPer = async () => {
             headerRight: () => (
               disabled? (<MaterialCommunityIcons name="check" size={35} onPress={() => {setUploaded(true);}} 
               style={{marginRight: 10, marginBottom:3, opacity: 0.3}}/>)
-              : (<MaterialCommunityIcons name="check" size={35} onPress={_onButtonPress} 
+              : (<MaterialCommunityIcons name="check" size={35} onPress={ isChange ? _ChangeAuction : _onButtonPress} 
               style={{marginRight: 10, marginBottom:3, opacity: 1}}/>)
             )});
         },[disabled]);
@@ -564,7 +569,6 @@ const _getLocPer = async () => {
             setBookDateVisible(true);
         };
 
-
         const days=["일요일","월요일","화요일","수요일","목요일","금요일","토요일"];
 
         const _setBookDate = date => {
@@ -583,6 +587,7 @@ const _getLocPer = async () => {
           var w = days[date.getDay()];
           setBookDate(y+"년 "+m+"월 "+d+"일 "+w);
           setBookDateVisible(false);
+          setIsLoading(true);
         };
 
         const _hideBookDatePicker = () => {
@@ -608,6 +613,7 @@ const _getLocPer = async () => {
         }
         setBookTime(h+"시 "+m+"분");
         setBookTimeVisible(false);
+        setIsLoading(true);
       };
 
       const _hideBookTimePicker = () => {
@@ -634,6 +640,7 @@ const _getLocPer = async () => {
       var w = days[date.getDay()];
       setEndDate(y+"년 "+m+"월 "+d+"일 "+w);
       setEndDateVisible(false);
+      setIsLoading(true);
     };
 
     const _hideEndDatePicker = () => {
@@ -659,13 +666,158 @@ const _getLocPer = async () => {
     }
     setEndTime(h+"시 "+m+"분");
     setEndTimeVisible(false);
+    setIsLoading(true);
   };
 
   const _hideEndTimePicker = () => {
     setEndTimeVisible(false);
   };
 
+  const _changeDate = date => {
+    var moment = require('moment');
+    var w = days[moment(date).day()];
+    let text = moment(date).format('YYYY년 MM월 DD일 ') + w;
+    return text;
+  }
 
+  const _changeTime = date => {
+    var moment = require('moment');
+    let text = moment(date).format('hh시 mm분');
+    return text;
+  }
+
+  // 수정할 공고 정보 불러오기
+  useEffect( () => {
+    if(isChange){
+
+      setTitle(route.params.title);
+      setBookDate(_changeDate(route.params.reservation));
+      setBookTime(_changeTime(route.params.reservation));
+      setEndDate(_changeDate(route.params.deadline));
+      setEndTime(_changeTime(route.params.deadline));
+      setMeetingType(route.params.groupType);
+      setFoodType(changeListData(route.params.storeType).split(", "));
+      setNumOfPeople(route.params.groupCnt);
+      setSelectedAge(route.params.age);
+      setSelectedSex(route.params.gender);
+      setSelectedLocation(route.params.addr);
+      setAdditionalContent(route.params.content);
+      setButtonPress(false);
+      setLoc(route.params.addr);
+      setMinPrice(route.params.minPrice);
+      setMaxPrice(route.params.maxPrice);
+      setRegion({
+        longitude: initialLongi,
+        latitude: initialLati,
+        latitudeDelta: 0.3,
+        longitudeDelta: 0.3,
+
+    });
+    }
+  },[]);
+
+  
+  useEffect(()=> {
+    setIsLoading(false);
+  },[additionalContent,endFullData,maxPrice,minPrice,bookFullData,foodType,title,meetingType,numOfPeople,selectedSex,selectedAge,loc])
+
+  // 수정 put 보내기
+  const putApi = async () => {
+
+    let fixedUrl = url+"/auction/"+`${auctionId}`;
+
+    let Info = {
+      content: additionalContent,
+      deadline: endFullData,
+      maxPrice: maxPrice,
+      minPrice: minPrice,
+      reservation: bookFullData,
+      storeType: JSON.stringify(foodType),
+      title: title,
+      groupType: meetingType,
+      groupCnt: numOfPeople,
+      gender: selectedSex,
+      age: selectedAge,
+      addr: String(loc),
+    };
+
+    let options = {
+      method: 'PUT',
+      headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-AUTH-TOKEN' : token,
+      },
+      body: JSON.stringify( Info ),
+  };
+    try {
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        console.log(res);
+
+        return res["success"];
+
+      } catch (error) {
+        console.error(error);
+      }
+}
+
+// 공고 수정 액션
+const _ChangeAuction = async() => {
+  try{
+    spinner.start();
+    var result;
+
+    if(endFullData === route.params.deadline && bookFullData ===route.params.reservation){
+      result = await putApi();
+
+    }else{
+      result = await f(_setData, putApi);
+    }
+
+    
+    if (!result) {
+      alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+    }else {
+      setUploaded(true);
+      if(!disabled){
+        setTitle('');
+        setBookDate("");
+        setBookTime("");
+        setEndDate("");
+        setEndTime("");
+        setMeetingType("");
+        setFoodType([]);
+        setNumOfPeople("");
+        setSelectedAge("");
+        setSelectedSex("");
+        setSelectedLocation("");
+        setAdditionalContent("");
+        setButtonPress(false);
+        setLoc("");
+        setMinPrice("");
+        setMaxPrice("");
+        setRegion({
+          longitude: initialLongi,
+          latitude: initialLati,
+          latitudeDelta: 0.3,
+          longitudeDelta: 0.3,
+      });
+        setErrorMessage("아래 정보를 입력해주세요");
+        setDisabled(true);
+        setUploaded(false);
+        
+        navigation.navigate("AuctionDetailStack", {isUser: true, id: auctionId });
+      }else {
+        alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+      };
+    }
+  }catch(e){
+    Alert.alert("Register Error", e.message);
+  }finally{
+    spinner.stop();
+  }
+}
     return (
       <KeyboardAwareScrollView
         extraScrollHeight={20}
@@ -675,7 +827,7 @@ const _getLocPer = async () => {
           <Label>공고 제목</Label>
            <StyledTextInput 
            value={title}
-           onChangeText={text => setTitle(text)}
+           onChangeText={text => {setTitle(text); setIsLoading(true);}}
            placeholder="공고 제목을 입력하세요."
            returnKeyType="done"
            maxLength={20}
@@ -706,8 +858,10 @@ const _getLocPer = async () => {
             onPress={() => {
                 if(meetingType==="회식"){
                     setMeetingType("");
+                    setIsLoading(true);
                 }else {
                     setMeetingType("회식");
+                    setIsLoading(true);
                 }
             }}
             />
@@ -719,8 +873,10 @@ const _getLocPer = async () => {
             onPress={() => {
                 if(meetingType==="친구 모임"){
                     setMeetingType("");
+                    setIsLoading(true);
                 }else {
                     setMeetingType("친구 모임");
+                    setIsLoading(true);
                 }
             }}
             />
@@ -732,8 +888,10 @@ const _getLocPer = async () => {
             onPress={() => {
                 if(meetingType==="가족 모임"){
                     setMeetingType("");
+                    setIsLoading(true);
                 }else {
                     setMeetingType("가족 모임");
+                    setIsLoading(true);
                 }
             }}
             />
@@ -745,8 +903,10 @@ const _getLocPer = async () => {
             onPress={() => {
                 if(meetingType==="기타"){
                     setMeetingType("");
+                    setIsLoading(true);
                 }else {
                     setMeetingType("기타");
+                    setIsLoading(true);
                 }
             }}
             />
@@ -762,11 +922,11 @@ const _getLocPer = async () => {
             onPress={() => {
                 if(foodType.includes("한식")){
                   let array = foodType.filter((el) => el !=="한식");
-                  setFoodType(array);
+                  setFoodType(array); setIsLoading(true);
                 }else {
                   let array = foodType.slice();
                   array.push("한식");
-                  setFoodType(array)
+                  setFoodType(array); setIsLoading(true);
                 }
             }}
             />
@@ -778,11 +938,11 @@ const _getLocPer = async () => {
             onPress={() => {
               if(foodType.includes("양식")){
                 let array = foodType.filter((el) => el !=="양식");
-                setFoodType(array);
+                setFoodType(array); setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("양식");
-                setFoodType(array)
+                setFoodType(array); setIsLoading(true);
               }
             }}
             />
@@ -794,11 +954,11 @@ const _getLocPer = async () => {
             onPress={() => {
               if(foodType.includes("중식")){
                 let array = foodType.filter((el) => el !=="중식");
-                setFoodType(array);
+                setFoodType(array); setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("중식");
-                setFoodType(array)
+                setFoodType(array); setIsLoading(true);
               }
             }}
             />
@@ -810,11 +970,11 @@ const _getLocPer = async () => {
             onPress={() => {
               if(foodType.includes("일식")){
                 let array = foodType.filter((el) => el !=="일식");
-                setFoodType(array);
+                setFoodType(array); setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("일식");
-                setFoodType(array)
+                setFoodType(array); setIsLoading(true);
               }
             }}
             />
@@ -826,11 +986,11 @@ const _getLocPer = async () => {
             onPress={() => {
               if(foodType.includes("기타")){
                 let array = foodType.filter((el) => el !=="기타");
-                setFoodType(array);
+                setFoodType(array); setIsLoading(true);
               }else {
                 let array = foodType.slice();
                 array.push("기타");
-                setFoodType(array)
+                setFoodType(array); setIsLoading(true);
               }
             }}
             />
@@ -843,7 +1003,7 @@ const _getLocPer = async () => {
             <InputContiner>
                   <StyledTextInputs 
                 value={numOfPeople.toString()}
-                onChangeText={text => setNumOfPeople(removeWhitespace(text))}
+                onChangeText={text => {setNumOfPeople(removeWhitespace(text)); setIsLoading(true);}}
                 autoCapitalize="none"
                 keyboardType="number-pad"
                 autoCorrect={false}
@@ -854,7 +1014,7 @@ const _getLocPer = async () => {
 
                 <StyledTextInputs 
                 value={minPrice.toString()}
-                onChangeText={text => setMinPrice(removeWhitespace(text))}
+                onChangeText={text => {setMinPrice(removeWhitespace(text)); setIsLoading(true);}}
                 autoCapitalize="none"
                 keyboardType="number-pad"
                 placeholder="최소가격"
@@ -867,7 +1027,7 @@ const _getLocPer = async () => {
                 </SmallContainer>
                 <StyledTextInputs
                 value={maxPrice.toString()}
-                onChangeText={text => setMaxPrice(removeWhitespace(text))}
+                onChangeText={text => {setMaxPrice(removeWhitespace(text)); setIsLoading(true);}}
                 autoCapitalize="none"
                 keyboardType="number-pad"
                 placeholder="최대가격"
@@ -904,7 +1064,7 @@ const _getLocPer = async () => {
     <Marker
       coordinate={region}
       pinColor="blue"
-      onPress={() => {setSelectedLocation(region); getGeocodeAsync(region);}}
+      onPress={() => {setSelectedLocation(region); getGeocodeAsync(region); setIsLoading(true);}}
     />
 </MapView>
 <CurrentButton onPress= {()=> {
@@ -943,7 +1103,7 @@ const _getLocPer = async () => {
 
            <StyledTextInputs 
            value={additionalContent}
-           onChangeText={text => setAdditionalContent(text)}
+           onChangeText={text => {setAdditionalContent(text); setIsLoading(true);}}
            autoCapitalize="none"
            placeholder="추가 사항"
            autoCorrect={false}
@@ -953,8 +1113,6 @@ const _getLocPer = async () => {
            multiline
            />
           
-          
-
         </Container>
             <AdditionContainer></AdditionContainer>
         <Container>

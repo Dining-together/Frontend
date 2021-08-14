@@ -1,7 +1,8 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import styled from "styled-components/native";
-import {View, Dimensions, FlatList} from "react-native";
-import {AuctionList} from "../../utils/data";
+import {View, Dimensions, FlatList, Alert} from "react-native";
+import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
+import {changeDateData, changeEndDateData, changeListData, cutDateData} from "../../utils/common";
 
 const WIDTH = Dimensions.get("screen").width; 
 
@@ -65,22 +66,24 @@ const ChangeText = styled.Text`
 
 
 
-const Item = ({item: {id, title, type, count, region, preMenu, prePrice, bookTime, registerTime}, 
+const Item = ({item: {auctionId, title, storeType, groupType, groupCnt, deadline, addr, minPrice, maxPrice, reservation, createdDate}, 
                 onPress, onChange, onRemove, isUser}) => {
+
+
     return (
         <View>
-            <ItemContainer onPress={onPress} >
+            <ItemContainer onPress={() => onPress(auctionId)} >
                 <TimeTextContiner>
-                    <ContentText>{bookTime}</ContentText>
-                    <ContentText>마감 N분전</ContentText>
+                    <ContentText>{changeDateData(reservation)} 예약</ContentText>
+                    <ContentText>마감 {changeEndDateData(deadline)} 전</ContentText>
                 </TimeTextContiner>
                 <ItemBox>
                     <ContentTitleText>{title}</ContentTitleText>
-                    <ContentText>단체 유형: {type}({count}명)</ContentText>
-                    <ContentText>선호 지역: {region}</ContentText>
-                    <ContentText>선호 메뉴: {preMenu}</ContentText>
-                    <ContentText>선호 가격대: {prePrice}</ContentText>
-                    <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{registerTime}</ContentText>
+                    <ContentText>단체 유형: {groupType} ({groupCnt}명)</ContentText>
+                    <ContentText>선호 지역: {addr}</ContentText>
+                    <ContentText>선호 메뉴: {changeListData(storeType)}</ContentText>
+                    <ContentText>선호 가격대: {minPrice}원 ~ {maxPrice}원</ContentText>
+                    <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{changeDateData(createdDate)} 등록</ContentText>
                 </ItemBox>
             </ItemContainer>
             <ChangeContainer>
@@ -89,32 +92,205 @@ const Item = ({item: {id, title, type, count, region, preMenu, prePrice, bookTim
             </ChangeContainer>
         </View>
 
-
-
-
     );
 };
 
 const BidManage = ({navigation, route}) => {
 
-    const [data, setData ] = useState(AuctionList);
+    const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const {token,  id} = useContext(LoginContext);
 
+    const [data, setData ] = useState([]);
     const [isUser, setIsUser] = useState(route.params.isUser);
 
-    const _onAuctionPress = item => {navigation.navigate("AuctionDetail",{id: item['id']})};
+    const _onAuctionPress = itemId => {navigation.navigate("AuctionDetail",{id: itemId})};
+
+    
+
 
     // 입찰내역 수정으로 이동
     const _onChange = item => {
-        if(isUser)
-            navigation.navigate("RegisterAuction", {id: item['id']});
-        else
-            navigation.navigate("AuctionBid", {id: item['id']});
-
+        if(isUser){
+            // 공고 수정
+            navigation.navigate("RegisterAuction", 
+            {id: item['auctionId'], isChange : true, title: item['title'], reservation: item['reservation'],
+            groupType: item['groupType'], storeType: item['storeType'], groupCnt: item['groupCnt'], 
+            maxPrice: item['maxPrice'], minPrice: item['minPrice'], addr: item['addr'], content: item['content'],
+            age: item['age'], gender: item['gender'], deadline: item['deadline'] });
+        }
+        else{
+            // 입찰 수정
+            navigation.navigate("AuctionBid", {id: item['id']});}
     };
 
+    // 입찰내역 삭제 / 공고
     const _onRemove = id => {
-        setData(data.filter(data => data.id !== id));
+        if(isUser)
+            // 공고 삭제
+            Alert.alert(
+                "", "삭제하시겠습니까?",
+                [{ text: "확인", onPress: () => {_onDelete(id)} },
+                { text: "취소", style: "cancel" },]
+              );
+        else
+            // 입찰 삭제
+            Alert.alert(
+                "", "삭제하시겠습니까?",
+                [{ text: "확인", onPress: () => {_onBidDelete(id)} },
+                { text: "취소", style: "cancel" },]
+              );
     };
+
+    // 공고 삭제 delete 처리
+    const deleteApi = async (url) => {
+
+        let options = {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+        };
+        try {
+            let response = await fetch(url,options);
+            let res = await response.json();
+
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          }
+    }
+
+    // 공고 삭제 한다고 수락했을 때 delete 처리 시도
+    const _onDelete = async(id) => {
+        try{
+            spinner.start();
+
+            const result = await deleteApi(url+"/auction/"+`${id}`);
+
+            if(!result){
+                alert("다시 공고를 삭제해주세요.");
+            }
+            else{
+                alert("공고가 삭제되었습니다.");
+                getApi();
+            }
+        }catch(e){
+                console.log("Error", e.message);
+        }finally{
+            spinner.stop();
+        }
+    }
+
+    // 입찰 삭제 delete 처리
+    const deleteBidApi = async (url) => {
+
+        let options = {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+        };
+        try {
+            let response = await fetch(url,options);
+            let res = await response.json();
+
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          }
+    }
+
+    // 입찰 삭제 한다고 수락했을 때 delete 처리 시도
+    const _onBidDelete = async(id) => {
+        try{
+            spinner.start();
+
+            const result = await deleteApi(url+"/auction/auctioneer/"+`${id}`);
+
+            if(!result){
+                alert("다시 시도해주세요.");
+            }
+            else{
+                alert("입찰이 삭제되었습니다.");
+                getApi();
+            }
+        }catch(e){
+                console.log("Error", e.message);
+        }finally{
+            spinner.stop();
+        }
+    }
+
+    // 진행중 공고 불러오기
+    const getApi = async () => {
+
+        let fixedUrl = (isUser ? url+"/auction/"+`${id}`+"/auctions" : url+"/auction/"+`${id}`+"/auction");
+        console.log(fixedUrl);
+
+        let options = { 
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+
+        };
+        try {
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            console.log(res['list']);
+
+            if(isUser){
+                setData(_setLatestList(_filterProceeding(res['list'])));
+            } else {
+                setData(_setLatestList(_filterProceeding(res.list.auction)));
+            }
+
+            console.log(data);
+
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          } finally {
+            spinner.stop();
+          }
+    }
+
+    useEffect( () => {
+        getApi();
+
+        // 화면 새로고침(navigation 이동 후 돌아왔을 때 새로고침)
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            getApi();
+        });
+
+        return willFocusSubscription;
+
+    },[]);
+
+
+    // 최신순
+    const _setLatestList = (prev) => {
+        var res = prev.sort(function (a,b){
+            return Number(cutDateData(b.createdDate)) - Number(cutDateData(a.createdDate));
+        });
+        return res;
+    };
+
+    const _filterProceeding = (prev) => {
+        let array = prev.filter((obj) => obj.status === 'PROCEEDING');
+        return array;
+};
 
 
     return (
@@ -122,14 +298,14 @@ const BidManage = ({navigation, route}) => {
             <BidContainer>
                 <FlatList
                 horizontal={false}
-                keyExtractor={item => item['id'].toString()}
+                keyExtractor={item => item['auctionId'].toString()}
                 data={data} 
                 renderItem={({item}) => (
                     <Item item={item} 
                         isUser={isUser}
-                        onPress={()=> _onAuctionPress(item)}
+                        onPress={()=> _onAuctionPress(item['auctionId'])}
                         onChange={()=> _onChange(item)}
-                        onRemove={() => _onRemove(item['id'])}
+                        onRemove={() => _onRemove(item['auctionId'])}
                     />
                 )}/>
             </BidContainer>

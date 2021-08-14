@@ -120,6 +120,7 @@ const Auction = ({navigation}) => {
     const [open3, setOpen3] = useState(false);
     const [selected3, setSelected3] = useState(null);
     const [list3, setList3] = useState([
+        {label: "전체", value: "전체"},
         {label: "서울특별시", value: "서울특별시"},
         {label: "인천광역시", value: "인천광역시"},
         {label: "대전광역시", value: "대전광역시"},
@@ -231,13 +232,13 @@ const Auction = ({navigation}) => {
             list = _filterSelected2(list, selected2);
         }
 
-        if (selected3 !== null){
+        if (selected3 !== null && selected3!=="전체"){
             let l = selectsigungoo(selected3);
             let stateList = setRegionList(l, l.length);
             setList4(stateList);
             list = _filterSelected3(list, selected3);
         }
-        if (selected4 !== null) {
+        if (selected4 !== null && selected4!=="전체") {
             list = _filterSelected3(list, selected4);
         }
         setAuctionListData(list);

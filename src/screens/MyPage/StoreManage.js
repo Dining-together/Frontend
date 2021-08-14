@@ -85,8 +85,7 @@ const StoreManage = ({ navigation }) => {
 
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
-    const {token, doc, storeId} = useContext(LoginContext);
-
+    const {token, doc, id} = useContext(LoginContext);
 
     // 업체 기본정보
     const [phoneNumber, setPhoneNumber] = useState("");
@@ -190,7 +189,8 @@ const StoreManage = ({ navigation }) => {
 
     // 업체 정보들 불러오기
     const infoGet = async () => {
-        let fixedUrl =url+'/member/store/'+`${storeId}`;
+        let fixedUrl =url+'/member/store/'+`${id}`;
+        console.log(fixedUrl);
 
         try{
             spinner.start();
@@ -226,7 +226,7 @@ const StoreManage = ({ navigation }) => {
 
     // 메뉴 불러오기(menus 설정)
     const menuGet = async() => {
-        let fixedUrl = url+'/member/'+`${storeId}`+'/menus';
+        let fixedUrl = url+'/member/'+`${id}`+'/menus';
         
         try{
             spinner.start();

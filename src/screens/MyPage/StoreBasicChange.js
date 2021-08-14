@@ -346,7 +346,6 @@ const StoreBasicChange = ({ navigation, route }) => {
         try {
             let response = await fetch(url,options);
             let res = await response.json();
-
             return res["success"];
 
           } catch (error) {
@@ -356,7 +355,7 @@ const StoreBasicChange = ({ navigation, route }) => {
 
     // 업체 사진 여러장 post
     const postImageApi = async () => {
-        let fixedUrl = url+'/member/store/imagesss'; 
+        let fixedUrl = url+'/member/store/images'; 
 
         let formData = new FormData();
 
@@ -378,7 +377,8 @@ const StoreBasicChange = ({ navigation, route }) => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-    
+            console.log(res);
+
             return res["success"];
             
             } catch (error) {
