@@ -132,3 +132,21 @@ export const _changeType = (type) => {
     }
     return text;
 }
+
+export const _changeTypeKorean = (type) => {
+    let text;
+
+    switch(type){
+        case "KOREAN":
+            text = "한식"; break;
+        case "CHINESE":
+            text = "중식"; break;
+        case "JAPANESE":
+            text = "일식"; break;
+        case "WESTERN":
+            text = "양식"; break;
+        case "ETC":
+            text = "기타"; break;
+    }
+    return text;
+}
