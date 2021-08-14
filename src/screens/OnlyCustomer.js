@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-import React, { useEffect } from 'react';
-import styled from "styled-components/native";
-import { Alert } from 'react-native';
-
-=======
 import React,{useEffect} from 'react';
 import styled from "styled-components/native";
 import { Alert } from 'react-native';
->>>>>>> 4a4b2c39a47cd57d0f4b14bfea79ca59de52ae05
 
 const Container = styled.View`
     flex: 1;
