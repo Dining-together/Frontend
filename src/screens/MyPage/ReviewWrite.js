@@ -64,7 +64,7 @@ const ReviewWrite = ({navigation, route}) => {
     const {token, doc, id} = useContext(LoginContext);
 
     const [content, setContent] = useState('');
-    const [successBidId, setSuccessBidId] = useState(route.params.successBidId);
+    let successBidId = route.params.successBidId;
 
     const [starRating, setStarRating] = useState(0);
     const [maxRating, setMaxRating] = useState([1, 2, 3, 4, 5]);

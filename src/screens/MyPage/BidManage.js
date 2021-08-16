@@ -3,6 +3,7 @@ import styled from "styled-components/native";
 import {View, Dimensions, FlatList, Alert} from "react-native";
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
 import {changeDateData, changeEndDateData, changeListData, cutDateData} from "../../utils/common";
+import { MaterialIcons } from '@expo/vector-icons'; 
 
 const WIDTH = Dimensions.get("screen").width; 
 
@@ -67,8 +68,7 @@ const ChangeText = styled.Text`
 
 
 const Item = ({item: {auctionId, title, storeType, groupType, groupCnt, deadline, addr, minPrice, maxPrice, reservation, createdDate}, 
-                onPress, onChange, onRemove, isUser}) => {
-
+                onPress, onChange, onRemove, isUser, onChartPress}) => {
 
     return (
         <View>
@@ -79,6 +79,10 @@ const Item = ({item: {auctionId, title, storeType, groupType, groupCnt, deadline
                 </TimeTextContiner>
                 <ItemBox>
                     <ContentTitleText>{title}</ContentTitleText>
+                    {isUser && 
+                        <MaterialIcons name="insert-chart-outlined" size={26}  onPress={onChartPress} 
+                        style={{position:'absolute', alignSelf:'flex-end', margin: '1%'}}/>
+                    }
                     <ContentText>단체 유형: {groupType} ({groupCnt}명)</ContentText>
                     <ContentText>선호 지역: {addr}</ContentText>
                     <ContentText>선호 메뉴: {changeListData(storeType)}</ContentText>
@@ -86,10 +90,12 @@ const Item = ({item: {auctionId, title, storeType, groupType, groupCnt, deadline
                     <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{changeDateData(createdDate)} 등록</ContentText>
                 </ItemBox>
             </ItemContainer>
+            {isUser &&
             <ChangeContainer>
                 <ChangeText onPress={onChange}>수정</ChangeText>
                 <ChangeText onPress={onRemove}>삭제</ChangeText>
-            </ChangeContainer>
+            </ChangeContainer> }
+            
         </View>
 
     );
@@ -102,11 +108,10 @@ const BidManage = ({navigation, route}) => {
     const {token,  id} = useContext(LoginContext);
 
     const [data, setData ] = useState([]);
+    const [auctioneerId, setAuctioneerId] = useState([]);
     const [isUser, setIsUser] = useState(route.params.isUser);
 
     const _onAuctionPress = itemId => {navigation.navigate("AuctionDetail",{id: itemId})};
-
-    
 
 
     // 입찰내역 수정으로 이동
@@ -185,6 +190,7 @@ const BidManage = ({navigation, route}) => {
         }
     }
 
+
     // 입찰 삭제 delete 처리
     const deleteBidApi = async (url) => {
 
@@ -212,7 +218,7 @@ const BidManage = ({navigation, route}) => {
         try{
             spinner.start();
 
-            const result = await deleteApi(url+"/auction/auctioneer/"+`${id}`);
+            const result = await deleteBidApi(url+"/auction/auctioneer/"+`${id}`);
 
             if(!result){
                 alert("다시 시도해주세요.");
@@ -227,6 +233,7 @@ const BidManage = ({navigation, route}) => {
             spinner.stop();
         }
     }
+
 
     // 진행중 공고 불러오기
     const getApi = async () => {
@@ -247,17 +254,18 @@ const BidManage = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            console.log(res['list']);
+
+
+            let list = res['list'].map( item => item.auction );
+
 
             if(res.list!==undefined) {
             if(isUser){
                 setData(_setLatestList(_filterProceeding(res['list'])));
             } else {
-                setData(_setLatestList(_filterProceeding(res.list.auction)));
+                setData(_setLatestList(_filterProceeding(list)));
             }
         }
-        console.log(res.list);
-
 
             return res["success"];
 
@@ -301,6 +309,11 @@ const BidManage = ({navigation, route}) => {
         }
 };
 
+    // 로그 분석으로 이동
+    const onChartPress = (id) => {
+        navigation.navigate("AucLogManageTab", {auctionId: id})
+    }
+
 
     return (
         <Container>
@@ -316,6 +329,7 @@ const BidManage = ({navigation, route}) => {
                             onPress={()=> _onAuctionPress(item['auctionId'])}
                             onChange={()=> _onChange(item)}
                             onRemove={() => _onRemove(item['auctionId'])}
+                            onChartPress={() => onChartPress(item['auctionId'])}
                         />
                     )}/>
                 )}

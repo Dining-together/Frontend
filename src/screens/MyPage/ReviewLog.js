@@ -12,15 +12,16 @@ const Container = styled.View`
   background-color: ${({ theme }) => theme.background};
 `;
 
-const BidLogManage = ({route}) => {
-  let id = route.params.auctionId;
+const ReviewLog = () => {
+
+  const {id} = useContext(LoginContext);
   const {url} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [data, setData] = useState("");
 
   const getApi = async () => {
 
-    let fixedUrl = url+"/search/log/auctionbid?auctionId="+id;
+    let fixedUrl = url+"/search/log/storereview?storeId="+id;
     console.log(fixedUrl);
 
     let options = {
@@ -47,22 +48,22 @@ const BidLogManage = ({route}) => {
       }
 }
 
-
 useEffect(() => {
   getApi();
 },[]);
-  return (
-    <Container>
-      <WebView 
-        originWhitelist={["*"]}
-        scalesPageToFit={true}
-        bounces={false}
-        javaScriptEnabled
-        style={{ height: HEIGHT*1.5, width: WIDTH*2.3 }}
-        source={{ 
-        html: `${data}` }}
-      />    
-      </Container>
+
+    return (
+        <Container>
+            <WebView 
+              originWhitelist={["*"]}
+              scalesPageToFit={true}
+              bounces={false}
+              javaScriptEnabled
+              style={{ height: HEIGHT*1.5, width: WIDTH*2.3 }}
+              source={{ 
+                html: `${data}` }}
+            />    
+        </Container>
   );
 };
-export default BidLogManage;  
+export default ReviewLog;  
