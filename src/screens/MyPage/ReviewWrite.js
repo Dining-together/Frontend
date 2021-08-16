@@ -66,6 +66,7 @@ const ReviewWrite = ({navigation, route}) => {
     const [content, setContent] = useState('');
     let successBidId = route.params.successBidId;
 
+
     const [starRating, setStarRating] = useState(0);
     const [maxRating, setMaxRating] = useState([1, 2, 3, 4, 5]);
 
@@ -144,19 +145,24 @@ const ReviewWrite = ({navigation, route}) => {
 
     // 리뷰 post (리뷰내용 + 사진들)
     const postApi = async () => {
-        let fixedUrl = url+'/auction/'+`${successBidId}`+'/review?content='+`${content}`+'&score='+`${starRating}`; 
+        let fixedUrl = url+'/auction/'+`${successBidId}`+"/review"; 
         console.log(fixedUrl);
         let formData = new FormData();
 
-        for (let i = 0; i < photos.length; i++) {
-            let photo = photos[i];
-            formData.append("files", {uri: photo.uri, name: photo.name, type: photo.type});
-        }
+        photos.map( item => formData.append("files", {uri: item.uri, name: item.name, type: item.type}));
+
+        formData.append("score", starRating);
+        formData.append("content", content);
+        formData.append("successBidId", successBidId);
+
+
+        console.log(formData);
+
         let options = {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
-                'Content-Type': 'multipart/form-data',
+                "Content-Type" : "multipart/form-data",
                 'X-AUTH-TOKEN' : token,
             },
             body: formData,
