@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useEffect, useContext, useLayoutEffect} from 'react';
 import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import {MaterialCommunityIcons} from "@expo/vector-icons";
@@ -76,7 +76,7 @@ const Item = ({item: {id, src, name, menu, type, location}, onPress, onStarPress
 
 const Bookmark = ({navigation, route}) => {
     const {token} = useContext(LoginContext);
-    const {url,aurl} = useContext(UrlContext);
+    const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext)
     const [isUser, setIsUser] = useState(route.params.isUser);
 
@@ -115,17 +115,18 @@ const Bookmark = ({navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
+            console.log(res);
+
             setData(res.list);
 
-            
-            return (res.success);
+            return res["success"];
 
           } catch (error) {
             console.error(error);
           } finally {
             spinner.stop();
-            setIsLoading(true);
             setIsDeleted(false);
+            setIsLoading(true);
           }
     };
 
@@ -268,22 +269,38 @@ const Bookmark = ({navigation, route}) => {
         }
     }
 
+    const _waitList = () => {
+        try{
+            spinner.start();
 
+            if(isLoading){
+                if(isUser){
+                    let list = data.map( item => item.storeId);
+                    list.map(item => getStoreApi(item));
+                }else{
+                    let list = data.map( item => item.auctionId );
+                    list.map(item => getAuctionApi(item));  
+                }
+            }
+
+        }catch(e){
+                console.log("Error", e.message);
+        }finally{
+            spinner.stop();
+        }
+    }
+
+    useLayoutEffect( () => {
+        getApi();
+    },[changed, isDeleted])
 
     useEffect( () => {
-        getApi();
-        if(isLoading){
-            if(isUser){
-                let list = data.map( item => item.storeId);
-                list.map(item => getStoreApi(item));
-                
-            }else{
-                let list = data.map( item => item.auctionId );
-                list.map(item => getAuctionApi(item));  
-            }
-        }
-        
+
+        _waitList();
+
     },[isLoading, isDeleted, changed]);
+
+    
 
     return (
         <>

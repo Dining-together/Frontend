@@ -228,7 +228,6 @@ const Signup = ({ navigation, route }) => {
 
         useEffect(() => {
             setDisabled(            
-                false
                 !(userId && email && password && passwordConfirm && !errorMessage &&isEmailValidated && !emailErrorMessage && !isChanging)
             );
             if(route.params.mode==="User"){

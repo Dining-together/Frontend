@@ -387,7 +387,8 @@ const StoreBasicChange = ({ navigation, route }) => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-    
+            console.log(res);
+
             return res["success"];
             
             } catch (error) {
