@@ -112,7 +112,9 @@ const StoreConvChange = ({ navigation, route }) => {
     // 업로드
     const [disabled, setDisabled] = useState(false)
     const [uploaded, setUploaded] = useState(false);
-    const [errorMessage, setErrorMessage] = useState();
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const [buttonPress, setButtonPress] = useState(false);
 
     const didMountRef = useRef();
 
@@ -174,11 +176,21 @@ const StoreConvChange = ({ navigation, route }) => {
             headerRight: () => (
                 disabled ? (<MaterialCommunityIcons name="check" size={35} onPress={_onConvPress}
                     style={{ marginRight: 10, marginBottom: 3, opacity: 0.3 }} />)
-                    : (<MaterialCommunityIcons name="check" size={35} onPress={() => _onConvPress()}
+                    : (<MaterialCommunityIcons name="check" size={35} onPress={_buttonPress}
                         style={{ marginRight: 10, marginBottom: 3, opacity: 1 }} />)
             )
         });
     }, [disabled, func]);
+
+    const _buttonPress = () => {
+        setButtonPress(true);
+    }
+
+    useEffect(() => {
+        if (buttonPress) {
+            _onConvPress();
+        }
+      },[buttonPress]);
 
     // 편의 시설 등록
     const postApi = async () => {
@@ -238,9 +250,6 @@ const StoreConvChange = ({ navigation, route }) => {
             }      
         }
     };
-
-
-
 
 
     return (

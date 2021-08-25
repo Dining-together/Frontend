@@ -156,7 +156,7 @@ const SearchStore = ({navigation, route}) => {
             }else{
                 setSearchData([]);
             }
-            console.log(res.list);
+            
         }catch(error) {
             console.error(error);
         }finally {

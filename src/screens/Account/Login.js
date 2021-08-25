@@ -8,6 +8,7 @@ import {images} from "../../images";
 import {UrlContext, ProgressContext, LoginConsumer, LoginContext} from "../../contexts";
 import {Alert} from "react-native";
 import * as Location from "expo-location";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Container = styled.View`
     flex: 1;
@@ -179,9 +180,14 @@ const Login = ({navigation}) => {
         try{
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            setToken(res["data"]);
-            tokenData = res["data"];
-            setAutoLogin(auto);
+            if(res.success){
+                setToken(res["data"]);
+                tokenData = res["data"];
+                setAutoLogin(auto);
+                if(auto){
+                    AsyncStorage.setItem('UserToken', tokenData);
+                }
+            }
             return res["success"];
         }catch (error) {
             console.error(error);

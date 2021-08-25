@@ -190,11 +190,10 @@ const AuctionBid = ({ navigation, route }) => {
         };
 
         try {
-            console.log(fixedUrl)
-            console.log(options)
+             
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            console.log(res);
+         
     
             return res["success"];
     
@@ -227,7 +226,7 @@ const AuctionBid = ({ navigation, route }) => {
       try {
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
-        console.log(res);
+       
 
         return res["success"];
 

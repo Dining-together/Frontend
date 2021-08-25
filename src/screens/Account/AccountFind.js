@@ -91,15 +91,12 @@ const AccountFind = ({navigation}) => {
 
     const handleKeyApi = async() => {
         let fixed = url+`/member/auth/verify/password?email=${email}&key=${certification}`
-        console.log(fixed);
         const response = await fetch(fixed);
         const res = await response.json();
-        console.log(res);
         return res["code"];
     };
 
     const _handleAuthButtonPress = async() => {
-        console.log(certification)
         const result =  await handleKeyApi();
         if (result === 400){
             setCertificated(false);

@@ -88,6 +88,10 @@ const Stars = ({score}) => {
         {
             list.push(<MaterialCommunityIcons name="star" size={25} color="yellow"/>)
         }
+        for(i = 0; i<5-one;i++)
+        {
+            list.push(<MaterialCommunityIcons name="star-outline" size={25} color="yellow"/>)
+        }
     }else {
         for(i = 0; i<one;i++)
         {
@@ -95,6 +99,15 @@ const Stars = ({score}) => {
         }
         if((half - one*2) !== 0){
             list.push(<MaterialCommunityIcons name="star-half" size={25} color="yellow"/>)
+            for(i = 0; i<5-one-1;i++)
+            {
+                list.push(<MaterialCommunityIcons name="star-outline" size={25} color="yellow"/>)
+            }
+        }else{
+            for(i = 0; i<5-one;i++)
+            {
+                list.push(<MaterialCommunityIcons name="star-outline" size={25} color="yellow"/>)
+            }
         }
     }
     return list;
@@ -166,7 +179,7 @@ const Review = ({navigation, route}) => {
         extraScrollHeight={20}>
             <List>
                {reviews!==[] && reviews.map(review => (
-                   <ReviewSet key={review['reviewId']} review={review}/>
+                   <ReviewSet key={review.reviewId} review={review}/>
                ))} 
             </List>
         </KeyboardAwareScrollView>

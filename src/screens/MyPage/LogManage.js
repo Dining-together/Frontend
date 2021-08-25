@@ -13,16 +13,15 @@ const Container = styled.View`
 `;
 
 const LogManage = () => {
-
   const {id} = useContext(LoginContext);
-  const {url} = useContext(UrlContext);
+  const {surl} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [data, setData] = useState("");
 
   const getApi = async () => {
 
-    let fixedUrl = url+"/search/log/storeview?storeId="+id;
-    console.log(fixedUrl);
+    let fixedUrl = surl+"/search/log/storeview?storeId="+id;
+    
 
     let options = {
         method: 'GET',
@@ -36,7 +35,6 @@ const LogManage = () => {
         spinner.start();
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
-        
         setData(res.data);
 
         return res["success"];
@@ -48,13 +46,12 @@ const LogManage = () => {
       }
 }
 
-console.log(data);
+ 
 
 
 useEffect(() => {
   getApi();
 },[]);
-
 
     return (
         <Container>
@@ -65,7 +62,7 @@ useEffect(() => {
               javaScriptEnabled
               style={{ height: HEIGHT*1.5, width: WIDTH*2.3 }}
               source={{ 
-                html: `${data}` }}
+                html:  `${data}` }}
             />    
         </Container>
   );

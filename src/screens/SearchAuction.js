@@ -123,7 +123,7 @@ const SearchAuction = ({navigation, route}) => {
                 setSearchData(res.list);
             }else{
                 setSearchData([]);
-                console.log([].length)
+                
             }
         }catch(error) {
             console.error(error);

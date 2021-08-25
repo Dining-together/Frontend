@@ -76,7 +76,7 @@ const Item = ({item: {id, src, name, menu, type, location}, onPress, onStarPress
 
 const Bookmark = ({navigation, route}) => {
     const {token} = useContext(LoginContext);
-    const {url} = useContext(UrlContext);
+    const {url, aurl} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext)
     const [isUser, setIsUser] = useState(route.params.isUser);
 
@@ -115,7 +115,7 @@ const Bookmark = ({navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
-            console.log(res);
+           
 
             setData(res.list);
 

@@ -76,8 +76,9 @@ const ButtonContainer = styled.View`
 
 const StoreImage = styled.Image`
     background-color:${({theme}) => theme.imageBackground};
-    height: ${HEIGHT*0.12}px;
-    width: ${HEIGHT*0.12}px;
+    height: ${HEIGHT*0.2}px;
+    width: ${HEIGHT*0.35}px;
+    margin-top: 2%;
 `;
 
 
@@ -97,6 +98,7 @@ const StoreManage = ({ navigation }) => {
     const [lat, setLat] = useState("");
     const [lon, setLon] = useState("");
     const [ment, setMent] = useState("");
+    const [storeImages, setStoreImages] = useState([]);
 
     // 업체 메뉴 리스트
     const [menus, setMenus] = useState([]);
@@ -207,6 +209,7 @@ const StoreManage = ({ navigation }) => {
                     setLat(res.data.latitude);
                     setLon(res.data.longitude);
                     setMent(res.data.comment);
+                    setStoreImages(res.data.storeImages);
                 }
                 // 편의정보 등록되어있으면 값 바꿈
                 if(res.data.facility != null){
@@ -501,6 +504,9 @@ const StoreManage = ({ navigation }) => {
                     />
                     <RowItemContainer>
                         <DescTitle>업체 사진</DescTitle>
+                        {storeImages.map( item => 
+                            <StoreImage source={{uri : item.path}} key = {item.id}/>
+                        )}
                     </RowItemContainer>
                     <ManageText 
                         label="업체유형"
@@ -564,7 +570,8 @@ const StoreManage = ({ navigation }) => {
                     {menus.map(item => (
                         
                         <RowItemContainer key={item.menuId}>
-                            <View style={{flexDirection: 'row', justifyContent: 'space-between', }}>
+                            <StoreImage source={{uri : item.path}}/>
+                            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: '3%'}}>
                                 <Label>이름 : {item.name}</Label>
                                 <Label>가격 : {item.price}원</Label>
                                 <SmallButton title="삭제" onPress={() => {_onMenuDelete(item.menuId);}} containerStyle={{ width: '20%', }}/>

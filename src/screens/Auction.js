@@ -141,7 +141,7 @@ const Auction = ({navigation}) => {
             <ItemContainer onPress={() => onPress(auctionId)} >
                 <TimeTextContiner>
                     <ContentText>{changeDateData(reservation)} 예약</ContentText>
-                    <ContentText>마감 {changeEndDateData(deadline)} 전</ContentText>
+                    <ContentText>{_handleDeadline(deadline)}</ContentText>
                 </TimeTextContiner>
                 <ItemBox>
                     <ContentTitleText>{title}</ContentTitleText>
@@ -166,6 +166,11 @@ const Auction = ({navigation}) => {
             </ItemContainer>
         );
     });
+
+    const _handleDeadline = (date) => {
+        if(date!==null){
+        return date.slice(2,4)+date.slice(5,7)+date.slice(8,10)+date.slice(11,13)+date.slice(14,16)+" 마감";
+    }};
 
     const _deleteStar = async (id) => {
         var fixedUrl = url+"/member/favorites";
@@ -261,8 +266,10 @@ const Auction = ({navigation}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
             var list = res["list"];
+            
             setAllData(list);
             setAuctionListData(list);
+            console.log(list);
         }catch(error) {
             console.error(error);
         }finally {
@@ -373,6 +380,7 @@ const Auction = ({navigation}) => {
                 textStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.23, position: "absolute", left: WIDTH*0.015, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
+                showTickIcon={false}
                 arrowIconContainerStyle={{position: "absolute", right: 5}}
                 placeholder="정렬"
                 placeholderStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
@@ -388,6 +396,7 @@ const Auction = ({navigation}) => {
                 setOpen={setOpen2}
                 setValue={setSelected2}
                 setItems={setList2}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.23, position: "absolute", left: WIDTH*0.25, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -404,6 +413,7 @@ const Auction = ({navigation}) => {
                 items={list3}
                 setOpen={setOpen3}
                 setValue={setSelected3}
+                showTickIcon={false}
                 onClose={() => setSelected4(null)}
                 setItems={setList3}
                 textStyle={{color: theme.text, fontSize: _checkSize(selected3), fontWeight: "bold"}}
@@ -423,6 +433,7 @@ const Auction = ({navigation}) => {
                 setOpen={setOpen4}
                 setValue={setSelected4}
                 setItems={setList4}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: _checkSize(selected4), fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.25, position: "absolute", right: WIDTH*0.01, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}

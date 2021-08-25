@@ -14,26 +14,31 @@ export const validatePassword = password => {
 };
 
 export const changeDateData = date => {
+    if(date!==null){
     var y = date.slice(0,4);
     var m = date.slice(5,7);
     var d = date.slice(8,10);
     var h = date.slice(11,13);
     var min = date.slice(14,16);
-    return y+"/"+m+"/"+d+" "+h+":"+min;    
+    return y+"/"+m+"/"+d+" "+h+":"+min;   
+    } 
 };
 
 export const changeEndDateData = date => {
-    var now = new Date().toJSON();
-    var now_y = now.slice(0,4);
-    var now_m = now.slice(5,7);
-    var now_d = now.slice(8,10);
-    var now_h = now.slice(11,13);
-    var now_min = now.slice(14,16); 
-    var y = date.slice(0,4);
-    var m = date.slice(5,7);
-    var d = date.slice(8,10);
-    var h = date.slice(11,13);
-    var min = date.slice(14,16);
+    var now = new Date();
+    console.log(now);
+    console.log(date);
+    var moment = require('moment');
+    var now_y = moment(now).format('YYYY');
+    var now_m = moment(now).format('MM');
+    var now_d = moment(now).format('DD');
+    var now_h = moment(now).format('hh');
+    var now_min = moment(now).format('mm'); 
+    var y = moment(date).format('YYYY');
+    var m = moment(date).format('MM');
+    var d = moment(date).format('DD');
+    var h = moment(date).format('hh');
+    var min = moment(date).format('mm'); 
     var yy = y - now_y;
 
     var res = "";
@@ -69,26 +74,30 @@ export const changeListData = (list) => {
 
 // YYYY/MM/DD HH:MM => "YYYYMMDDHHMM" 
 export const cutDateData = (date) => {
-    var a = date.slice(0,4)
-    var b = date.slice(5,7)
-    var c = date.slice(8,10)
-    var d =  date.slice(11,13)
-    var e = date.slice(14,16);
+
+    var moment = require('moment');
+    
+    var a = moment(date).format('YYYY');
+    var b = moment(date).format('MM');
+    var c = moment(date).format('DD');
+    var d =  moment(date).format('HH');
+    var e = moment(date).format('mm');
     return a+b+c+d+e;
 };
 
 export const changeCreatedDateData = now => {
-    var date = new Date().toJSON();
-    var now_y = now.slice(0,4);
-    var now_m = now.slice(5,7);
-    var now_d = now.slice(8,10);
-    var now_h = now.slice(11,13);
-    var now_min = now.slice(14,16); 
-    var y = date.slice(0,4);
-    var m = date.slice(5,7);
-    var d = date.slice(8,10);
-    var h = date.slice(11,13);
-    var min = date.slice(14,16);
+    var date = new Date();
+    var moment = require('moment');
+    var now_y = moment(now).format('YYYY');
+    var now_m = moment(now).format('MM');
+    var now_d = moment(now).format('DD');
+    var now_h = moment(now).format('hh');
+    var now_min = moment(now).format('mm'); 
+    var y = moment(date).format('YYYY');
+    var m = moment(date).format('MM');
+    var d = moment(date).format('DD');
+    var h = moment(date).format('hh');
+    var min = moment(date).format('mm'); 
     var yy = now_y - y;
 
     var res = "";

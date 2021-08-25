@@ -1,6 +1,6 @@
 import React from 'react';
 import {createMaterialTopTabNavigator} from "@react-navigation/material-top-tabs";
-import {LogManage, ReviewLog} from "../screens";
+import {LogManage , ReviewLog} from "../screens";
 import {Dimensions} from "react-native";
 
 const HEIGHT = Dimensions.get("screen").width;

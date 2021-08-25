@@ -116,7 +116,7 @@ const MapText = styled.Text`
 
 const Store = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
-    const {allow, token, mode} = useContext(LoginContext);
+    const {allow, token, mode, setAllow} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
 
     const [sort,setSort] = useState(0);

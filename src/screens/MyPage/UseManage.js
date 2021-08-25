@@ -3,6 +3,7 @@ import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import { SmallButton } from '../../components';
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
+import moment from "moment";
 
 const UseContainer = styled.View`
     flex-direction: row;
@@ -66,7 +67,7 @@ const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, o
                     <SmallButton 
                         title={review ? "리뷰완료" : "리뷰쓰기" }
                         onPress={onReviewPress} 
-                        containerStyle={{width: '30%', height: '80%', marginRight: '4%'}}
+                        containerStyle={{width: '40%', height: '80%', marginRight: '4%'}}
                         disabled={review}
                         uploaded={review}
                         />
@@ -80,7 +81,7 @@ const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, o
 
 
 const UseManage = ({navigation}) => {
-    const {url} = useContext(UrlContext);
+    const {aurl} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const {token} = useContext(LoginContext);
 
@@ -88,7 +89,7 @@ const UseManage = ({navigation}) => {
 
     const getApi = async (url) => {
 
-        console.log(url);
+       
 
         let options = {
             method: 'GET',
@@ -103,9 +104,10 @@ const UseManage = ({navigation}) => {
             spinner.start();
             let response = await fetch(url,options);
             let res = await response.json();
-            console.log(res);
+            
 
             setList(res.list);
+            
 
             return res["success"];
 
@@ -118,11 +120,11 @@ const UseManage = ({navigation}) => {
 
 
     useEffect( () => {
-        getApi(url+"/auction/user/bids");
+        getApi(aurl+"/auction/user/bids");
 
         // 화면 새로고침
         const willFocusSubscription = navigation.addListener('focus', () => {
-            getApi(url+"/auction/user/bids");
+            getApi(aurl+"/auction/user/bids");
         });
 
         return willFocusSubscription;
@@ -130,9 +132,11 @@ const UseManage = ({navigation}) => {
     }, []);
 
     const _onReviewPress = item => {
-        var today = new Date().toJSON();
-
-        if(item.reservation < today){
+        const moment = require('moment');
+        const today = moment().format('YYYYMMDDhhmm');
+        const reservation = moment(item.reservation).format('YYYYMMDDhhmm');
+         
+        if(reservation < today){
             navigation.navigate("ReviewWrite", {successBidId : item['successBidId']});
         }
         else{

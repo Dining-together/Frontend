@@ -18,12 +18,12 @@ const HEIGHT = Math.round(Dimensions.get("window").height * 0.4);
 const WINDOW_WIDTH =  Dimensions.get('window').width;
 const WIDTH = Math.round(WINDOW_WIDTH * 0.95);
 
-// const StyledImage = styled.Image`
-//     width: ${WIDTH}px;
-//     height: ${HEIGHT}px;
-//     background-color:${({theme}) => theme.imageBackground};
-//     border-radius: 10px;
-// `;
+const StyledImage = styled.Image`
+    width: ${WIDTH}px;
+    height: ${HEIGHT}px;
+    background-color:${({theme}) => theme.imageBackground};
+    border-radius: 10px;
+`;
 
 const StyledImageView = styled.View`
     width: ${WIDTH}px;
@@ -72,6 +72,11 @@ const DesContainer = styled.View`
 const PhotoMentCon = styled.View`
     position: absolute;
     bottom: 35%;
+`;
+
+const PhotoMenuCon = styled.View`
+    position: absolute;
+    top: 5;
 `;
 
 const FirstInfo = styled.View`
@@ -136,6 +141,7 @@ const StarContainer = styled.View`
 
 const ReviewButton = styled.TouchableOpacity`
     flex-direction: row;
+    align-items: center;
 `;
 
 
@@ -161,6 +167,10 @@ const StoreDetail = ({navigation, route}) => {
             {
                 list.push(<MaterialCommunityIcons name="star" size={25} color="yellow"/>)
             }
+            for(i = 0; i<5-one;i++)
+            {
+                list.push(<MaterialCommunityIcons name="star-outline" size={25} color="yellow"/>)
+            }
         }else {
             for(i = 0; i<one;i++)
             {
@@ -168,6 +178,15 @@ const StoreDetail = ({navigation, route}) => {
             }
             if((half - one*2) !== 0){
                 list.push(<MaterialCommunityIcons name="star-half" size={25} color="yellow"/>)
+                for(i = 0; i<5-one-1;i++)
+                {
+                    list.push(<MaterialCommunityIcons name="star-outline" size={25} color="yellow"/>)
+                }
+            }else{
+                for(i = 0; i<5-one;i++)
+                {
+                    list.push(<MaterialCommunityIcons name="star-outline" size={25} color="yellow"/>)
+                }
             }
         }
         return list;
@@ -223,30 +242,34 @@ const StoreDetail = ({navigation, route}) => {
         return (h+"시 "+m+"분");
     };
 
-    const StoreImage = ({item: {id, src, des}, onStarPress, isStar,theme, onReviewPress, reviewAvg, reviewCnt}) => {
+    const StoreImage = ({item: {id, path, ment, name}, onStarPress, isStar,theme, onReviewPress, reviewAvg, reviewCnt}) => {
         const {mode} = useContext(LoginContext);
         let score = Math.round(reviewAvg * 10)/10
         return (
             <>
-                {/* <StyledImage source={{uri: src}} /> */}
-                <StyledImageView />
+                {path===""? (
+                    <StyledImageView />
+                ):(
+                    <StyledImage source={{uri: path}} />
+                )}
                 { mode === "CUSTOMER" &&
                     <StarContainer>
                     {isStar? 
                     (
                         <MaterialCommunityIcons name="star" size={40} onPress={onStarPress} color="yellow"
-                  style={{marginLeft: 15, marginTop: 5, opacity: 0.7}}/>
+                  style={{position: 'absolute', right: 5, marginTop: 5, opacity: 0.7}}/>
                     ) 
                     : (
                         <MaterialCommunityIcons name="star-outline" size={40} onPress={onStarPress} color="yellow"
-                  style={{marginLeft: 15, marginTop: 5, opacity: 0.7}}/>
+                  style={{position: 'absolute', right: 5, marginTop: 5, opacity: 0.7}}/>
                     )}
                 </StarContainer>}
-                {(id !== 0 && id <= menus.length) && <PhotoMentCon><DesText style={{color: "blue"}}>{menus[id-1].description}</DesText></PhotoMentCon>}
+                {(name!=="")&& <PhotoMenuCon><DesText style={{color: "blue", backgroundColor: "white"}}>{name}</DesText></PhotoMenuCon>}
+                {(ment!=="") && <PhotoMentCon><DesText style={{color: "blue", backgroundColor: "white"}}>{ment}</DesText></PhotoMentCon>}
                 <DesContainer>
                     <DesTextBox>
                         <Title>{storeName}</Title>
-                        <ReviewButton onPress={onReviewPress}><Stars score={score}/></ReviewButton>
+                        <ReviewButton onPress={onReviewPress}><DesText>별점: </DesText><Stars score={score}/></ReviewButton>
                     </DesTextBox>
                     <DesTextBox>
                         <DesText>{storeType}</DesText>
@@ -277,8 +300,9 @@ const StoreDetail = ({navigation, route}) => {
     const [comment, setComment] = useState(null);
     const [reviewAvg, setReviewAvg] = useState(null);
     const [reviewCnt, setReviewCnt]= useState(null) ;
-    const [pic, setPic] = useState();
-    const [menuPics, setPics] = useState([]);
+    const [picData, setPicData] = useState([]);
+    const [photos, setPhotos] = useState([{ment: "", name: "", path: ""}]);
+    const [menuPics, setMenuPics] = useState([]);
     const _handleFacilities = () => {
         if(facilities===[]){
             return null;
@@ -310,7 +334,6 @@ const StoreDetail = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            console.log(res);
             let menuResponse = await fetch(menuUrl, options);
             let menuRes = await menuResponse.json();
             setStoreName(res.data.name);
@@ -323,6 +346,7 @@ const StoreDetail = ({navigation, route}) => {
             setComment(res.data.comment);
             setReviewAvg(res.data.reviewAvg);
             setReviewCnt(res.data.reviewCnt);
+            setPicData(res.data.storeImages);
             var uploaded = (res.data.facility===null);
             if(!uploaded){
                 setParking(res.data.facility.parking);
@@ -339,6 +363,27 @@ const StoreDetail = ({navigation, route}) => {
         }
     };
     
+    const _handlePic = () => {
+        var list = [];
+        if(picData.length>=2){
+            var additional1 = { path: picData[0].path, ment: "", name: "" };
+            var additional2 = { path: picData[1].path, ment: "", name: "" };
+            list.push(additional1);
+            list.push(additional2);
+        }else if(picData.length===1){
+            var additional = { path: picData[0].path, ment: "", name: "" };
+            list.push(additional);
+        }
+        if(menus.length!==0){
+            menus.map(m => {
+                list.push({
+                    path: m.path, ment: m.description, name: m.name,
+                })
+            });
+        }
+        setPhotos(list);
+    };  
+
     useEffect(()=> {
         _handleFacilities();
     },[facilities]);
@@ -346,6 +391,14 @@ const StoreDetail = ({navigation, route}) => {
     useEffect(() => {
         handleAPI();
     },[]);
+
+    useEffect(()=> {
+        if(picData.length!==0){
+            _handlePic();
+        }
+    },[picData]);
+
+    
 
     // 즐겨찾기 여부
     useEffect( () => {
@@ -425,7 +478,6 @@ const StoreDetail = ({navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
-            console.log(res);
             return res["success"];
 
             } catch (error) {
@@ -456,7 +508,6 @@ const StoreDetail = ({navigation, route}) => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            console.log(res);
 
             return res["success"];
 
@@ -467,7 +518,6 @@ const StoreDetail = ({navigation, route}) => {
 
     // 즐겨찾기 추가/삭제
     const _onStarPress = async(id) => {
-        console.log(id);
         try{
             spinner.start();
             let result;
@@ -504,7 +554,7 @@ const StoreDetail = ({navigation, route}) => {
            ref={carouselRef}
            data={photos}
            renderItem={({item}) => (
-                <StoreImage item={item} onReviewPress={_onReviewPress} onStarPress={() => _onStarPress(id)} isStar={isStar} theme={theme} 
+                <StoreImage item={item} key={item.name} onReviewPress={_onReviewPress} onStarPress={() => _onStarPress(id)} isStar={isStar} theme={theme} 
                 reviewAvg={reviewAvg} reviewCnt={reviewCnt}/>
             )}
             sliderWidth={WIDTH}
@@ -606,9 +656,7 @@ const StoreDetail = ({navigation, route}) => {
            
             <InfoBox isFirst={true}>
                     <InfoTextContainer>
-                    <FirstInfo><InfoText>간단한 한마디</InfoText></FirstInfo>
-                    <SecondInfo><InfoText></InfoText></SecondInfo>
-                    <ThirdInfo><InfoText></InfoText></ThirdInfo>
+                    <FirstInfo><MaterialCommunityIcons name="comment" size={25} color="black" style={{position: "absolute", left: 20}}/></FirstInfo>
                     </InfoTextContainer>
             </InfoBox>
             <InfoBox isLast={true}>
@@ -624,33 +672,6 @@ const StoreDetail = ({navigation, route}) => {
         </KeyboardAwareScrollView>
     );
 };
-var text = "One\nTwo\nThree";
-const photos = [
-    {
-        id: 0,
-        src: "",
-        des: "찌개"
-    },
-    {
-        id: 1,
-        src: "",
-        des: "고기"
-    },
-    {
-        id: 2,
-        src: "",
-        des: "밥"
-    },
-    {
-        id: 3,
-        src: "",
-        des: "반찬"
-    },
-    {
-        id: 4,
-        src: "",
-        des: "물"
-    },
-]; 
+
 
 export default StoreDetail;

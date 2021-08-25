@@ -54,5 +54,5 @@ export {
     SearchAuction, SearchStore, Message, Login, Mode, Notice, Signup, Main, AccountFind, RegisterAuction, Auction, StoreDetail, StoreInfo, StoreMap,
     ReviewManage, ChatManage, Bookmark, BidManage, BidManageFinished, PayManage, UseManage, OrderDetail, StoreManage, ReviewWrite, DocumentRegister,
     MultipleImage,BidDetail,StoreBasicChange,StoreConvChange, OnlyCustomer,AllStore, KrStore, JpStore, EtcStore, WsStore, ChStore, AuctionBidDetail,
-    AucLogManage, BidLogManage, LogManage,ReviewLog
+    AucLogManage, BidLogManage, LogManage, ReviewLog
 };

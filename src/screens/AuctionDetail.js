@@ -10,6 +10,11 @@ import { cutDateData, changeDateData } from '../utils/common';
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
 
+require('moment-timezone');
+var moment = require('moment');
+moment.tz.setDefault("Asia/Seoul");
+exports.moment = moment;
+
 const Container = styled.View`
     flex: 1;
     align-items: center;
@@ -113,10 +118,11 @@ const AucLineCon = styled.View`
     flex-direction: row;
     align-items: center;
     margin-left: 10px;
+    margin-right: 20px;
     `;
 
 const Store = styled.TouchableOpacity`
-    width: ${({double}) => double? WIDTH*0.4 : WIDTH*0.2};
+    width: ${({double}) => double? WIDTH*0.35 : WIDTH*0.2};
     justify-content: center;
 `;
 
@@ -209,7 +215,6 @@ const AuctionDetail = ({ navigation, route}) => {
             setAddr(data.addr);
             setFinished(data.status==="End");
             setBidstoreList(data.auctioneers);
-            console.log(res);
         }catch(error) {
             console.error(error);
         }finally {
@@ -234,44 +239,7 @@ const AuctionDetail = ({ navigation, route}) => {
         return completed;
     };
 
-    const changeEndDateData = (date) => {
-        var now = new Date().toJSON();
-        var now_y = now.slice(0,4);
-        var now_m = now.slice(5,7);
-        var now_d = now.slice(8,10);
-        var now_h = now.slice(11,13);
-        var now_min = now.slice(14,16); 
-        var y = date.slice(0,4);
-        var m = date.slice(5,7);
-        var d = date.slice(8,10);
-        var h = date.slice(11,13);
-        var min = date.slice(14,16);
-        var yy = y - now_y;
-
-        var res = "";
-        if (yy > 0){
-            if (m == now_m){
-                res = "약 "+yy+"년 ";
-            }else if (m > now_m){
-                var mm = m - now_m;
-                res = "약 "+yy+"년 "+mm+"달";
-            }else {
-                var mm = now_m - m;
-                res = "약 "+(yy-1)+"년 "+mm+"달";
-            }
-        }else if(m - now_m > 0){
-            res = "약 "+(m-now_m)+"달";
-        }else if(d - now_d){
-            res = "약 "+(d-now_d)+"일";
-        }else if(h - now_h > 0){
-            res = "약 "+ (h-now_h) +"시간";
-        }else {
-            res = "약 "+ (min-now_min) +"분";
-        }
-
-        return res;
-    };
-
+    
     // 입찰 참여 버튼
     const _bidButtonPress = () => {
         if(registered){
@@ -424,7 +392,7 @@ const AuctionDetail = ({ navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
-            console.log(res);
+       
             return res["success"];
 
             } catch (error) {
@@ -455,7 +423,7 @@ const AuctionDetail = ({ navigation, route}) => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            console.log(res);
+            
 
             return res["success"];
 
@@ -466,7 +434,7 @@ const AuctionDetail = ({ navigation, route}) => {
 
     // 즐겨찾기 추가/삭제
     const _onStarPress = async(id) => {
-        console.log(id);
+   
         try{
             spinner.start();
             let result;
@@ -491,6 +459,10 @@ const AuctionDetail = ({ navigation, route}) => {
             spinner.stop();
         }
     }
+
+    const _handleDeadline = (date) => {
+        return date.slice(0,10)+" "+date.slice(11,16)+" 마감";
+    };
 
 
     return (
@@ -520,7 +492,7 @@ const AuctionDetail = ({ navigation, route}) => {
                     </View>
                         <TextBox>
                         <Text style={{fontSize: 16, paddingLeft: 3}}>{userName}</Text>
-                        {(status==="PROCEEDING") && <Text>마감 {changeEndDateData(deadline)} 전</Text>}
+                        {(status==="PROCEEDING") && <Text>{_handleDeadline(deadline)}</Text>}
                         </TextBox>
                 </Header>
 
@@ -565,7 +537,7 @@ const AuctionDetail = ({ navigation, route}) => {
                             <Store onPress={() => _pressStore(item)}><StoreText style={{color: (item.storeId===id || item.success===true)? "blue" : "black"}}>{item.menu}</StoreText></Store>
                             <Store onPress={() => _pressStore(item)}><StoreText style={{color: (item.storeId===id || item.success===true)? "blue" : "black"}}>{item.price}원</StoreText></Store>
                         </AucLineCon>
-                        {(item.storeId===id) && (
+                        {(item.storeId===id) && finished && (
                             <DeleteButton>
                                 <MaterialCommunityIcons name="delete" size={20} style={{color: "blue"}} onPress={() => _deletePress(item.auctioneerId)}/>
                             </DeleteButton>

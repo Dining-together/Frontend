@@ -40,7 +40,7 @@ const DocumentRegister = ({navigation}) => {
         let formData = new FormData();
         formData.append('file', { uri: document, name: filename, type: type});
 
-        console.log(formData);
+  
 
         let options = {
             method: 'POST',
@@ -55,7 +55,7 @@ const DocumentRegister = ({navigation}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
-            console.log(res);
+      
             return res["success"];
 
         } catch (error) {

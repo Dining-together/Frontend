@@ -11,9 +11,15 @@ import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from "expo-location";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 import {changeListData} from "../utils/common";
+import { set } from 'react-native-reanimated';
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
+
+require('moment-timezone');
+var moment = require('moment');
+moment.tz.setDefault("Asia/Seoul");
+exports.moment = moment;
 
 const Container = styled.View`
     flex: 1;
@@ -165,7 +171,7 @@ background-color:  ${({ theme }) => theme.background};
 
 const RegisterAuction = ({navigation, route}) => {
   const {allow, token, setAllow} = useContext(LoginContext);
-  const {aurl} = useContext(UrlContext);
+  const {url} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [allowLoc, setAllowLoc] = useState(allow);
 
@@ -191,20 +197,31 @@ const RegisterAuction = ({navigation, route}) => {
     const [additionalContent, setAdditionalContent] = useState("");
     const didMountRef = useRef();
     const [foodType, setFoodType] = useState([]);
-    let bookFullData = route.params.reservation;
-    let endFullData = route.params.deadline;
     let auctionId = route.params.id;
+    let endFullData = "";
+    let bookFullData = "";
+
+
     const [isChange, setIsChange] = useState(route.params.isChange);
     const [buttonPress, setButtonPress] = useState(false);
   
-    const [isLoading, setIsLoading] = useState(false);
 
-    //날짜 데이터
-    const [BD, setBD] = useState("");
-    const [BT, setBT] = useState("");
-    const [ED, setED] = useState("");
-    const [ET, setET] = useState("");
+    const [bookYear, setBookYear] = useState();
+    const [bookMonth, setBookMonth] = useState();
+    const [bookDay, setBookDay] = useState();
+    const [bookHour, setBookHour] = useState();
+    const [bookMinute, setBookMinute] = useState();
 
+    const [endYear, setEndYear] = useState();
+    const [endMonth, setEndMonth] = useState();
+    const [endDay, setEndDay] = useState();
+    const [endHour, setEndHour] = useState();
+    const [endMinute, setEndMinute] = useState();
+
+  const [realBook , setRealBook] = useState();
+  const [realEnd , setRealEnd] = useState();
+
+  
     // 나이 드롭다운  
     const [open1, setOpen1] = useState(false);
     const [selectedAge, setSelectedAge] = useState("");
@@ -312,7 +329,7 @@ const _getLocPer = async () => {
   }, [allowLoc]);
 
   const handleApi = async () => {
-    let fixedUrl = aurl+"/auction";
+    let fixedUrl = url+"/auction";
 
     let Info = {
       content: additionalContent,
@@ -342,9 +359,6 @@ const _getLocPer = async () => {
   try{
       let response = await fetch(fixedUrl, options);
       let res = await response.json();
-      console.log(res);
-      console.log(options)
-      console.log(fixedUrl);
       var success = res["success"];
       if (success){
         auctionId = res["data"]["auctionId"];
@@ -362,12 +376,12 @@ const _getLocPer = async () => {
         let _errorMessage="";
         if(!title){
           _errorMessage = "공고 제목을 입력하세요";
-        }else if(!bookDate){
-          _errorMessage = "예약 날짜를 입력하세요";
-        }else if(!bookTime){
-          _errorMessage = "예약 시각을 입력하세요";
-        }else if(parseInt(book)<parseInt(getNowString())) {
-          _errorMessage = "예약 시간을 잘못 입력하였습니다";
+        // }else if(!bookDate){
+        //   _errorMessage = "예약 날짜를 입력하세요";
+        // }else if(!bookTime){
+        //   _errorMessage = "예약 시각을 입력하세요";
+        // }else if(parseInt(book)<parseInt(getNowString())) {
+        //   _errorMessage = "예약 시간을 잘못 입력하였습니다";
         }else if(!meetingType){
           _errorMessage = "단체 유형을 입력하세요";
         }
@@ -409,16 +423,17 @@ const _getLocPer = async () => {
         else if(!selectedLocation){
           _errorMessage = "선호지역을 입력하세요";
         }
-        else if(!endDate){
-          _errorMessage = "공고 마감 날짜를 입력하세요";
-        }
-        else if(!endTime){
-          _errorMessage = "공고 마감 시각을 입력하세요";
-        }else if(parseInt(end)<parseInt(getNowString())) {
-          _errorMessage = "공고 마감 시간을 잘못 입력하였습니다";
-        }else if(parseInt(end)>parseInt(book)){
-          _errorMessage = "공고 마감 시간을 예약 시간 이전으로 설정해주세요."
-        }else if(!additionalContent) {
+        // else if(!endDate){
+        //   _errorMessage = "공고 마감 날짜를 입력하세요";
+        // }
+        // else if(!endTime){
+        //   _errorMessage = "공고 마감 시각을 입력하세요";
+        // }else if(parseInt(end)<parseInt(getNowString())) {
+        //   _errorMessage = "공고 마감 시간을 잘못 입력하였습니다";
+        // }else if(parseInt(end)>parseInt(book)){
+        //   _errorMessage = "공고 마감 시간을 예약 시간 이전으로 설정해주세요."
+        // }
+        else if(!additionalContent) {
           _errorMessage = "추가 사항을 입력하세요.";
         }
         else {
@@ -432,32 +447,44 @@ const _getLocPer = async () => {
     },[title, bookDate,bookTime,endDate,endTime,foodType,numOfPeople,minPrice, maxPrice,selectedLocation,book,end, additionalContent, meetingType, selectedAge, selectedSex,loc]);
 
     useEffect(()=> {
-      setDisabled(errorMessage!=="" && !isLoading);
-    },[errorMessage, isLoading]);
+      setDisabled(errorMessage!=="");
+    },[errorMessage]);
 
 
     useEffect(()=> {
+ 
       var _book = bookDate.slice(0,4)+bookDate.slice(6,8)+bookDate.slice(10,12)+bookTime.slice(0,2)+bookTime.slice(4,6);
       var _end =  endDate.slice(0,4)+endDate.slice(6,8)+endDate.slice(10,12)+endTime.slice(0,2)+endTime.slice(4,6);
       setBook(_book);
       setEnd(_end);
+     
     },[bookTime,bookDate,endDate,endTime]);
 
     useEffect(() => {
       if (buttonPress) {
-        var r = _onPress();
+        if(!isChange){
+          var r = _onPress();
+        } else{
+          var r = _ChangeAuction();
+        }
+        
       }
     },[buttonPress]);
 
     const _setData = async () => {
-      bookFullData = BD+BT;
-      endFullData = ED+ET;
+     
+      bookFullData = realBook;
+      endFullData = realEnd;
+      
       return true;
     };
 
     const f = async (callback1, callback2) => {
+      
       var d = await callback1();
+      
       var res = await callback2();
+      
       return res;
     };
 
@@ -523,12 +550,13 @@ const _getLocPer = async () => {
             headerRight: () => (
               disabled? (<MaterialCommunityIcons name="check" size={35} onPress={() => {setUploaded(true);}} 
               style={{marginRight: 10, marginBottom:3, opacity: 0.3}}/>)
-              : (<MaterialCommunityIcons name="check" size={35} onPress={ isChange ? _ChangeAuction : _onButtonPress} 
+              : (<MaterialCommunityIcons name="check" size={35} onPress={ _onButtonPress} 
               style={{marginRight: 10, marginBottom:3, opacity: 1}}/>)
             )});
         },[disabled]);
 
         const getNowString =() => {
+         
           var now = new Date();
           var nowYear = String(now.getFullYear()); 
           var nowMonth = now.getMonth()+1;
@@ -560,6 +588,28 @@ const _getLocPer = async () => {
           return nowString;
         };
 
+        useEffect(()=>{
+         
+       
+          if(bookMonth!==undefined && bookHour!== undefined && bookMinute !== undefined && bookDay !== undefined && bookYear !== undefined){
+            
+            var moment = require('moment');
+            var time = moment(bookYear+"-"+bookMonth+"-"+bookDay+" "+bookHour+":"+bookMinute).utc(true).toDate();
+            var data = time.toISOString();
+             
+            setRealBook(data);
+          }
+        }, [bookMonth, bookDay, bookYear, bookHour, bookMinute]);
+
+        useEffect(()=>{
+          if(endMonth!==undefined && endHour !== undefined && endMinute !== undefined && endDay !== undefined && endYear!==undefined){
+            var moment = require('moment');
+            var time = moment(endYear+"-"+endMonth+"-"+endDay+" "+endHour+":"+endMinute).utc(true).toDate();
+            var data = time.toISOString();
+          
+            setRealEnd(data);
+          }
+       }, [endMonth, endDay, endYear, endHour, endMinute]);
 
 
       //date picker 각 시간 input에 대한 action 
@@ -571,22 +621,15 @@ const _getLocPer = async () => {
         const days=["일요일","월요일","화요일","수요일","목요일","금요일","토요일"];
 
         const _setBookDate = date => {
-          var strD = date.toJSON();
-          var sliced = strD.slice(0,11);
-          setBD(sliced);
-          var y = date.getFullYear();
-          var m = date.getMonth()+1;
-          if(m < 10){
-            m = "0"+m;
-          }
-          var d = date.getDate();
-          if(d< 10){
-            d = "0"+d;
-          }
-          var w = days[date.getDay()];
-          setBookDate(y+"년 "+m+"월 "+d+"일 "+w);
+          var realdate = moment(date).format("YYYY년 MM월 DD일");
+          var year =  moment(date).format("YYYY");
+          var month =  moment(date).format("MM");
+          var day =  moment(date).format("DD");
+          setBookYear(year);
+          setBookMonth(month);
+          setBookDay(day);
+          setBookDate(realdate);
           setBookDateVisible(false);
-          setIsLoading(true);
         };
 
         const _hideBookDatePicker = () => {
@@ -598,21 +641,13 @@ const _getLocPer = async () => {
       };
 
       const _setBookTime = time => {
-        var strT = time.toJSON();
-        var sliced = strT.slice(11,time.length);
-        setBT(sliced)
-        var h = time.getHours();
-        var m = time.getMinutes();
-        if(h < 10){
-          h = "0"+h;
-        }
-        
-        if(m< 10){
-          m = "0"+m;
-        }
-        setBookTime(h+"시 "+m+"분");
+        var real = moment(time).format("HH시 mm분");
+        var hour =  moment(time).format("HH");
+        var minute =  moment(time).format("mm");
+        setBookHour(hour);
+        setBookMinute(minute);
+        setBookTime(real);
         setBookTimeVisible(false);
-        setIsLoading(true);
       };
 
       const _hideBookTimePicker = () => {
@@ -624,22 +659,15 @@ const _getLocPer = async () => {
     };
 
     const _setEndDate = date => {
-      var strD = date.toJSON();
-      var sliced = strD.slice(0,11);
-      setED(sliced);
-      var y = date.getFullYear();
-      var m = date.getMonth()+1;
-      if(m < 10){
-        m = "0"+m;
-      }
-      var d = date.getDate();
-      if(d< 10){
-        d = "0"+d;
-      }
-      var w = days[date.getDay()];
-      setEndDate(y+"년 "+m+"월 "+d+"일 "+w);
+      var realdate = moment(date).format("YYYY년 MM월 DD일");
+      var year =  moment(date).format("YYYY");
+      var month =  moment(date).format("MM");
+      var day =  moment(date).format("DD");
+      setEndYear(year);
+      setEndMonth(month);
+      setEndDay(day);
+      setEndDate(realdate);
       setEndDateVisible(false);
-      setIsLoading(true);
     };
 
     const _hideEndDatePicker = () => {
@@ -651,21 +679,13 @@ const _getLocPer = async () => {
   };
 
   const _setEndTime = time => {
-    var strT = time.toJSON();
-    var sliced = strT.slice(11,time.length);
-    setET(sliced);
-    var h = time.getHours();
-    var m = time.getMinutes();
-    if(h < 10){
-      h = "0"+h;
-    }
-    
-    if(m< 10){
-      m = "0"+m;
-    }
-    setEndTime(h+"시 "+m+"분");
+    var real = moment(time).format("HH시 mm분");
+    var hour =  moment(time).format("HH");
+    var minute =  moment(time).format("mm");
+    setEndHour(hour);
+    setEndMinute(minute);
+    setEndTime(real);
     setEndTimeVisible(false);
-    setIsLoading(true);
   };
 
   const _hideEndTimePicker = () => {
@@ -673,14 +693,12 @@ const _getLocPer = async () => {
   };
 
   const _changeDate = date => {
-    var moment = require('moment');
     var w = days[moment(date).day()];
     let text = moment(date).format('YYYY년 MM월 DD일 ') + w;
     return text;
   }
 
   const _changeTime = date => {
-    var moment = require('moment');
     let text = moment(date).format('hh시 mm분');
     return text;
   }
@@ -690,10 +708,6 @@ const _getLocPer = async () => {
     if(isChange){
 
       setTitle(route.params.title);
-      setBookDate(_changeDate(route.params.reservation));
-      setBookTime(_changeTime(route.params.reservation));
-      setEndDate(_changeDate(route.params.deadline));
-      setEndTime(_changeTime(route.params.deadline));
       setMeetingType(route.params.groupType);
       setFoodType(changeListData(route.params.storeType).split(", "));
       setNumOfPeople(route.params.groupCnt);
@@ -715,15 +729,15 @@ const _getLocPer = async () => {
     }
   },[route.params]);
 
+  
 
-  useEffect(()=> {
-    setIsLoading(false);
-  },[additionalContent,endFullData,maxPrice,minPrice,bookFullData,foodType,title,meetingType,numOfPeople,selectedSex,selectedAge,loc])
+
+
 
   // 수정 put 보내기
   const putApi = async () => {
 
-    let fixedUrl = aurl+"/auction/"+`${auctionId}`;
+    let fixedUrl = url+"/auction/"+`${auctionId}`;
 
     let Info = {
       content: additionalContent,
@@ -752,8 +766,7 @@ const _getLocPer = async () => {
     try {
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
-        console.log(res);
-
+         
         return res["success"];
 
       } catch (error) {
@@ -767,13 +780,7 @@ const _ChangeAuction = async() => {
     spinner.start();
     var result;
 
-    if(endFullData === route.params.deadline && bookFullData ===route.params.reservation){
-      result = await putApi();
-
-    }else{
-      result = await f(_setData, putApi);
-    }
-
+    result = await f(_setData, putApi);
 
     if (!result) {
       alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
@@ -827,7 +834,7 @@ const _ChangeAuction = async() => {
           <Label>공고 제목</Label>
            <StyledTextInput 
            value={title}
-           onChangeText={text => {setTitle(text); setIsLoading(true);}}
+           onChangeText={text => setTitle(text)}
            placeholder="공고 제목을 입력하세요."
            returnKeyType="done"
            maxLength={20}
@@ -858,10 +865,8 @@ const _ChangeAuction = async() => {
             onPress={() => {
                 if(meetingType==="회식"){
                     setMeetingType("");
-                    setIsLoading(true);
                 }else {
                     setMeetingType("회식");
-                    setIsLoading(true);
                 }
             }}
             />
@@ -873,10 +878,8 @@ const _ChangeAuction = async() => {
             onPress={() => {
                 if(meetingType==="친구 모임"){
                     setMeetingType("");
-                    setIsLoading(true);
                 }else {
                     setMeetingType("친구 모임");
-                    setIsLoading(true);
                 }
             }}
             />
@@ -888,10 +891,8 @@ const _ChangeAuction = async() => {
             onPress={() => {
                 if(meetingType==="가족 모임"){
                     setMeetingType("");
-                    setIsLoading(true);
                 }else {
                     setMeetingType("가족 모임");
-                    setIsLoading(true);
                 }
             }}
             />
@@ -903,10 +904,8 @@ const _ChangeAuction = async() => {
             onPress={() => {
                 if(meetingType==="기타"){
                     setMeetingType("");
-                    setIsLoading(true);
                 }else {
                     setMeetingType("기타");
-                    setIsLoading(true);
                 }
             }}
             />
@@ -922,11 +921,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
                 if(foodType.includes("한식")){
                   let array = foodType.filter((el) => el !=="한식");
-                  setFoodType(array);  setIsLoading(true);
+                  setFoodType(array);  
                 }else {
                   let array = foodType.slice();
                   array.push("한식");
-                  setFoodType(array);  setIsLoading(true);
+                  setFoodType(array);  
                 }
             }}
             />
@@ -938,11 +937,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("양식")){
                 let array = foodType.filter((el) => el !=="양식");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }else {
                 let array = foodType.slice();
                 array.push("양식");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }
             }}
             />
@@ -954,11 +953,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("중식")){
                 let array = foodType.filter((el) => el !=="중식");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }else {
                 let array = foodType.slice();
                 array.push("중식");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }
             }}
             />
@@ -970,11 +969,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("일식")){
                 let array = foodType.filter((el) => el !=="일식");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }else {
                 let array = foodType.slice();
                 array.push("일식");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }
             }}
             />
@@ -986,11 +985,11 @@ const _ChangeAuction = async() => {
             onPress={() => {
               if(foodType.includes("기타")){
                 let array = foodType.filter((el) => el !=="기타");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }else {
                 let array = foodType.slice();
                 array.push("기타");
-                setFoodType(array);  setIsLoading(true);
+                setFoodType(array);  
               }
             }}
             />
@@ -1003,7 +1002,7 @@ const _ChangeAuction = async() => {
             <InputContiner>
                   <StyledTextInputs 
                 value={numOfPeople.toString()}
-                onChangeText={text => {setNumOfPeople(removeWhitespace(text)); setIsLoading(true);}}
+                onChangeText={text => setNumOfPeople(removeWhitespace(text))}
                 autoCapitalize="none"
                 autoCapitalize="none"
                 keyboardType="number-pad"
@@ -1015,7 +1014,7 @@ const _ChangeAuction = async() => {
 
                 <StyledTextInputs 
                 value={minPrice.toString()}
-                onChangeText={text => {setMinPrice(removeWhitespace(text)); setIsLoading(true);}}
+                onChangeText={text => setMinPrice(removeWhitespace(text))}
                 autoCapitalize="none"
                 keyboardType="number-pad"
                 placeholder="최소가격"
@@ -1028,7 +1027,7 @@ const _ChangeAuction = async() => {
                 </SmallContainer>
                 <StyledTextInputs
                 value={maxPrice.toString()}
-                onChangeText={text => {setMaxPrice(removeWhitespace(text)); setIsLoading(true);}}
+                onChangeText={text => setMaxPrice(removeWhitespace(text))}
                 autoCapitalize="none"
                 keyboardType="number-pad"
                 placeholder="최대가격"
@@ -1065,7 +1064,7 @@ const _ChangeAuction = async() => {
     <Marker
       coordinate={region}
       pinColor="blue"
-      onPress={() => {setSelectedLocation(region); getGeocodeAsync(region);  setIsLoading(true);}}
+      onPress={() => {setSelectedLocation(region); getGeocodeAsync(region); }}
     />
 </MapView>
 <CurrentButton onPress= {()=> {
@@ -1104,7 +1103,7 @@ const _ChangeAuction = async() => {
 
            <StyledTextInputs 
            value={additionalContent}
-           onChangeText={text => {setAdditionalContent(text); setIsLoading(true);}}
+           onChangeText={text => setAdditionalContent(text)}
            autoCapitalize="none"
            placeholder="추가 사항"
            autoCorrect={false}

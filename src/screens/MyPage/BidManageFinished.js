@@ -102,7 +102,7 @@ const Item = ({item: {auctionId, title, storeType, groupType,  groupCnt, addr, m
                 <ContentText>단체 유형: {groupType} ({groupCnt}명)</ContentText>
                 <ContentText>선호 지역: {addr}</ContentText>
                 <ContentText>선호 메뉴: {changeListData(storeType)}</ContentText>
-                <ContentText>선호 가격대: {minPrice}원 ~ {maxPrice}원</ContentText>
+                <ContentText style={{marginBottom: 10}}>선호 가격대: {minPrice}원 ~ {maxPrice}원</ContentText>
                 <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{changeDateData(createdDate)} 등록</ContentText>
             </ItemBox>
         </ItemContainer>
@@ -148,7 +148,7 @@ const BidManageFinished = ({navigation, route}) => {
                 setData(_setLatestList(_filterProceeding(list)));
             }}
 
-            console.log(list[0]);
+         
 
 
             return res["success"];
@@ -164,7 +164,7 @@ const BidManageFinished = ({navigation, route}) => {
     // 낙찰된 공고 불러오기
     const getSuccessApi = async () => {
 
-        let fixedUrl = url+"/auction/store/bids";
+        let fixedUrl = aurl+"/auction/store/bids";
         let options = {
             method: 'GET',
             headers: {

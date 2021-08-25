@@ -112,7 +112,7 @@ const AuctionBid = ({ navigation, route }) => {
 
     useEffect(() => {
         var p = route.params;
-        console.log(p);
+    
         setIsMine(p.isMine);
         setAuctionerrId(p.item.auctioneerId);
         setContent(p.item.content);

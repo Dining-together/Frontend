@@ -5,6 +5,7 @@ import {ProfileImage, InfoText,ToggleButton, RadioButton} from '../../components
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import {UrlContext, LoginContext, ProgressContext} from "../../contexts";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Container = styled.View`
     flex: 1;
@@ -78,7 +79,7 @@ const  UesrInfo = ({navigation}) => {
      // 서버 get 처리 (정보 가져오기)
      const getApi = async (url) => {
 
-        console.log(url);
+      
 
         let options = {
             method: 'GET',
@@ -93,7 +94,7 @@ const  UesrInfo = ({navigation}) => {
             spinner.start();
             let response = await fetch(url,options);
             let res = await response.json();
-            console.log(res);
+           
 
             setPhoto(res.data.path);
             setUserName(res.data.name);
@@ -129,7 +130,7 @@ const  UesrInfo = ({navigation}) => {
     // 회원 탈퇴 delete 처리
     const deleteApi = async (url) => {
 
-        console.log(url);
+      
 
         let options = {
             method: 'DELETE',
@@ -150,6 +151,17 @@ const  UesrInfo = ({navigation}) => {
           }
     }
 
+    const clearAll = async () => {
+        try {
+            spinner.start();
+          await AsyncStorage.clear()
+        } catch(e) {
+          console.error(e);
+        }finally{
+            spinner.stop();
+        }
+      };
+
     // 회원 탈퇴 처리
     const _onDelete = async() => {
         try{
@@ -163,7 +175,10 @@ const  UesrInfo = ({navigation}) => {
             else{
                 Alert.alert(
                     "", "회원탈퇴 되었습니다",
-                    [{ text: "확인", onPress: () => {setSuccess(false);} }] );
+                    [{ text: "확인", onPress: () => {
+                        clearAll();
+                        setSuccess(false);
+                    } }] );
             }
 
         }catch(e){

@@ -128,7 +128,7 @@ const StoreMap = ({navigation, route}) => {
     const mapRef = useRef();
     
     const theme = useContext(ThemeContext);
-    const {token, mode} = useContext(LoginContext);
+    const {token, mode, setAllow} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
 
@@ -168,13 +168,16 @@ const StoreMap = ({navigation, route}) => {
         };    
 
         try {
+            spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
             return res["success"];
 
-            } catch (error) {
+        } catch (error) {
             console.error(error);
+        }finally {
+            spinner.stop();
         }    
     };
 
@@ -246,7 +249,10 @@ const StoreMap = ({navigation, route}) => {
             let res = await response.json();
             let list = res["list"];
             setStoreListData(list);
-            setStoreList(list);
+            await getScope();
+            if(mode!=="STORE"){
+                await handleStarApi();
+            }
         }catch(error) {
             console.error(error);
         }finally {
@@ -280,30 +286,43 @@ const StoreMap = ({navigation, route}) => {
     }
 
     const filterRegion = async () => {
-        if(sort === 0){
-            var list = storeListData;
-        }else{
-            var type = _changeType(sort);
-            var list = storeListData.filter(item => item.storeType === type);
+        try{
+            spinner.start();
+            if(sort === 0){
+                var list = storeListData;
+            }else{
+                var type = _changeType(sort);
+                var list = storeListData.filter(item => item.storeType === type);
+            }
+            list = list.filter((item)=> checkScope(item.latitude, item.longitude)===true);
+            setStoreList(list);
+            setIsLoading(false);
+        }catch(e){
+            console.log(e);
+        }finally{
+            spinner.stop();
         }
-        list = list.filter((item)=> checkScope(item.latitude, item.longitude)===true);
-        setStoreList(list);
-        setIsLoading(false);
+    };
+
+    const getScope = async () => {
+        var boundary = await mapRef.current.getMapBoundaries();
+        setScope({
+            highLat: boundary.northEast.latitude,
+            highLon: boundary.northEast.longitude,
+            lowLat: boundary.southWest.latitude,
+            lowLon: boundary.southWest.longitude,
+        })
     };
 
     useEffect(()=> {
         handleApi();
-        if(mode!=="STORE"){
-            handleStarApi();
-        }
     },[]);
 
     useEffect(()=> {
-        setIsLoading(true);
-        if(scope.highLat!==null){
+        if(scope.highLat!==null && storeListData!==[]){
             filterRegion();
         }
-    },[scope, sort]);
+    },[scope, sort, storeListData]);
 
     const _onStorePress = item => {
         navigation.navigate('StoreDetailStack', { id: item.id, name: item.storeName });
@@ -314,7 +333,7 @@ const StoreMap = ({navigation, route}) => {
     };
 
 
-    const Store = ({item: {id, name, comment, path, reviewAvg}, onPress, theme}) => {
+    const Store = React.memo(({item: {id, name, comment, path, reviewAvg}, onPress, theme}) => {
         const [isStar, setIsStar] = useState(favorites.includes(id)===true);
 
         return (
@@ -343,7 +362,7 @@ const StoreMap = ({navigation, route}) => {
                 </ScoreBox>
             </ItemContainer>
         );
-    };
+    });
 
     return ( 
         <Container> 

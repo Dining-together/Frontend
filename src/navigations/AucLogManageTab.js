@@ -23,4 +23,4 @@ const AucLogManageTab = ({route}) => {
     );
 };
 
-export default AucLogManageTab;  
+export default AucLogManageTab; 

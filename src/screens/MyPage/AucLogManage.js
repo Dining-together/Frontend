@@ -13,16 +13,16 @@ const Container = styled.View`
 `;
 
 const AucLogManage = ({route}) => {
-  
+
   let id = route.params.auctionId;
-  const {url} = useContext(UrlContext);
+  const {surl} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [data, setData] = useState("");
 
   const getApi = async () => {
 
-    let fixedUrl = url+"/search/log/auctionview?auctionId="+id;
-    console.log(fixedUrl);
+    let fixedUrl = surl+"/search/log/auctionview?auctionId="+id;
+     
 
     let options = {
         method: 'GET',
@@ -36,7 +36,6 @@ const AucLogManage = ({route}) => {
         spinner.start();
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
-        
         setData(res.data);
 
         return res["success"];

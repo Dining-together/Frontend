@@ -101,7 +101,7 @@ const ReviewWrite = ({navigation, route}) => {
     useEffect(() => {
         if (route.params.photos) {
             setPhotos(route.params.photos);
-            console.log(route.params.photos);
+             
         }
       }, [route.params.photos, photos]);
 
@@ -146,7 +146,7 @@ const ReviewWrite = ({navigation, route}) => {
     // 리뷰 post (리뷰내용 + 사진들)
     const postApi = async () => {
         let fixedUrl = url+'/auction/'+`${successBidId}`+"/review"; 
-        console.log(fixedUrl);
+       
         let formData = new FormData();
 
         photos.map( item => formData.append("files", {uri: item.uri, name: item.name, type: item.type}));
@@ -156,7 +156,7 @@ const ReviewWrite = ({navigation, route}) => {
         formData.append("successBidId", successBidId);
 
 
-        console.log(formData);
+         
 
         let options = {
             method: 'POST',
@@ -172,7 +172,7 @@ const ReviewWrite = ({navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
-            console.log(res);
+            
             return res["success"];
 
           } catch (error) {

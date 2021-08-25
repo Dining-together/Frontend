@@ -86,7 +86,7 @@ const Item = ({item: {auctionId, title, storeType, groupType, groupCnt, deadline
                     <ContentText>단체 유형: {groupType} ({groupCnt}명)</ContentText>
                     <ContentText>선호 지역: {addr}</ContentText>
                     <ContentText>선호 메뉴: {changeListData(storeType)}</ContentText>
-                    <ContentText>선호 가격대: {minPrice}원 ~ {maxPrice}원</ContentText>
+                    <ContentText style={{marginBottom: 10}}>선호 가격대: {minPrice}원 ~ {maxPrice}원</ContentText>
                     <ContentText style={{position: "absolute", right: 5, bottom: 0}}>{changeDateData(createdDate)} 등록</ContentText>
                 </ItemBox>
             </ItemContainer>
@@ -218,7 +218,7 @@ const BidManage = ({navigation, route}) => {
         try{
             spinner.start();
 
-            const result = await deleteBidApi(url+"/auction/auctioneer/"+`${id}`);
+            const result = await deleteBidApi(aurl+"/auction/auctioneer/"+`${id}`);
 
             if(!result){
                 alert("다시 시도해주세요.");
@@ -238,8 +238,8 @@ const BidManage = ({navigation, route}) => {
     // 진행중 공고 불러오기
     const getApi = async () => {
 
-        let fixedUrl = (isUser ? url+"/auction/"+`${id}`+"/auctions" : url+"/auction/"+`${id}`+"/auction");
-        console.log(fixedUrl);
+        let fixedUrl = (isUser ? aurl+"/auction/"+`${id}`+"/auctions" : aurl+"/auction/"+`${id}`+"/auction");
+       
 
         let options = { 
             method: 'GET',

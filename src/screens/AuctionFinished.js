@@ -267,6 +267,7 @@ const AuctionFinished = ({navigation}) => {
                 setOpen={setOpen1}
                 setValue={setSelected1}
                 setItems={setList1}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.23, position: "absolute", left: WIDTH*0.015, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -285,6 +286,7 @@ const AuctionFinished = ({navigation}) => {
                 setOpen={setOpen2}
                 setValue={setSelected2}
                 setItems={setList2}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.23, position: "absolute", left: WIDTH*0.25, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -303,6 +305,7 @@ const AuctionFinished = ({navigation}) => {
                 setValue={setSelected3}
                 onClose={() => setSelected4(null)}
                 setItems={setList3}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: _checkSize(selected3), fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.25, position: "absolute", left:  WIDTH*0.485, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -320,6 +323,7 @@ const AuctionFinished = ({navigation}) => {
                 setOpen={setOpen4}
                 setValue={setSelected4}
                 setItems={setList4}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: _checkSize(selected4), fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.25, position: "absolute", right: WIDTH*0.01, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}

@@ -100,6 +100,7 @@ const RowDescContainer = styled.View`
     justify-content: center;
     margin-top: 5px;
     margin-bottom: 5px;
+    width: 50%;
 `;
 
 const ItemContainer = styled.TouchableOpacity`
@@ -251,6 +252,7 @@ const Main = ({ navigation }) => {
 
     useEffect(()=> {
         handleAuctionApi();
+       
     },[]);
 
 

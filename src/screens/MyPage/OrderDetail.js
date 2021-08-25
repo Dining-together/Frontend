@@ -78,7 +78,7 @@ const OrderSet = ({order: {id, date, src, name, number, bidPrice, menu}}) => {
 const OrderDetail = ({navigation, route,}) => {
 
     const [order, setOrder] = useState(Order[0]);
-    console.log(order);
+ 
 
     return (
         <Container>
