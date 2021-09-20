@@ -1,8 +1,10 @@
-import React, { useLayoutEffect, useState, useEffect, useRef } from 'react';
+import React, { useLayoutEffect, useState, useEffect, useRef, useContext } from 'react';
 import styled from "styled-components/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 
+//비동기적으로 멘트 끝까지 모두 보내졌는지 다시 확인하기  
 const Container = styled.View`
     flex: 1;
     justify-content: flex-start;
@@ -75,8 +77,12 @@ const Menu = styled.View`
 `;
 
 
-const AuctionBid = ({ navigation }) => {
+const AuctionBid = ({ navigation, route }) => {
+    const {token, id}  = useContext(LoginContext);
+    const {spinner}  = useContext(ProgressContext);
+    const {aurl, url}  = useContext(UrlContext);
 
+    const [menus, setMenus] = useState([]);
     const [menuRecommend, setMenuRecommend] = useState("");
     const [estimatedPrice, setEstimatedPrice] = useState("");
     const [explain, setExplain] = useState("");
@@ -84,12 +90,15 @@ const AuctionBid = ({ navigation }) => {
     const [disabled, setDisabled] = useState(false)
     const [uploaded, setUploaded] = useState(false);
     const [errorMessage, setErrorMessage] = useState("정보를 입력해주세요.");
+    const [isLoading, setIsLoading] = useState(false);
 
     const didMountRef = useRef();
 
     const [isModal, setModal] = useState(false);
 
-
+    const [auctionId, setAuctionId] = useState(null);
+    const [fix, setFix] = useState(false);
+    const [auctioneerId, setAuctioneerId] = useState(null);
 
     //에러 메세지 설정 
     useEffect(() => {
@@ -113,33 +122,210 @@ const AuctionBid = ({ navigation }) => {
     }, [menuRecommend, estimatedPrice, explain]);
 
     useEffect(() => {
-        setDisabled(!(menuRecommend && estimatedPrice && explain && !errorMessage));
-    }, [menuRecommend, estimatedPrice, explain, errorMessage]);
+        setDisabled(!(menuRecommend && estimatedPrice && explain && !errorMessage && !isLoading));
+    }, [menuRecommend, estimatedPrice, explain, errorMessage, isLoading]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
+            headerTitle: fix?"경매 입찰 수정":"경매 입찰 등록",
             headerRight: () => (
-                disabled ? (<MaterialCommunityIcons name="check" size={35} onPress={_onPress}
+                disabled ? (<MaterialCommunityIcons name="check" size={35} onPress={() =>{setUploaded(true)}}
                     style={{ marginRight: 10, marginBottom: 3, opacity: 0.3 }} />)
-                    : (<MaterialCommunityIcons name="check" size={35} onPress={_onPress}
+                    : (<MaterialCommunityIcons name="check" size={35} onPress={_onCompletePress}
                         style={{ marginRight: 10, marginBottom: 3, opacity: 1 }} />)
             )
         });
     }, [disabled]);
 
-    // 입찰등록 + 스피너 추가할 것
-    const _onPress = () => {
-        setUploaded(true);
-        if (!disabled) {
-            setMenuRecommend('');
-            setEstimatedPrice("");
-            setExplain("");
-            setErrorMessage("아래 정보를 입력해주세요");
-            setDisabled(true);
-            setUploaded(false);
-            navigation.navigate("AuctionDetail");
+    useEffect(()=>{
+        var p = route.params;
+        if(p.AuctionId){
+            setAuctionId(p.AuctionId);
+        }
+        if(p.auctioneerId){
+            setAuctioneerId(p.auctioneerId);
+        }
+        if(p.fix){
+            setFix(p.fix);
+        }
+    },[route.params]);
+
+    // 서버 get 처리
+    const getApi = async (url) => {
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+        };
+        try {
+            let response = await fetch(url,options);
+            let res = await response.json();
+            return res;
+
+          } catch (error) {
+            console.error(error);
+          }
+    }
+
+    const postfixApi = async () => {
+        let fixedUrl = `${aurl}/auction/auctioneer/${auctioneerId}`;
+
+        let Info = {
+            content: explain,
+            menu: menuRecommend,
+            price: Number(estimatedPrice),
+        };
+
+        let options = {
+            method: 'PUT',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+            body: JSON.stringify( Info ),
+        };
+
+        try {
+             
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+         
+    
+            return res["success"];
+    
+          } catch (error) {
+            console.error(error);
+          }
+    }
+
+    // 서버 post 처리
+
+    const postApi = async () => {
+        let fixedUrl = aurl+"/auction/"+auctionId+"/auctioneer";
+        
+        let Info = {
+            content: explain,
+            menu: menuRecommend,
+            price: Number(estimatedPrice),
+        };
+
+        let options = {
+          method: 'POST',
+          headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              'X-AUTH-TOKEN' : token,
+          },
+          body: JSON.stringify( Info ),
+      };
+
+      try {
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+       
+
+        return res["success"];
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+
+    // 메뉴 불러오기(menus 설정)
+    const menuGet = async() => {
+        let fixedUrl = url+'/member/'+`${id}`+'/menus';
+
+        try{
+            spinner.start();
+            const res =  await getApi(fixedUrl);
+
+            if(res.success){
+                setMenus(res.list);
+            }
+            else{
+                alert("메뉴를 다시 불러와주세요.")
+            }
+        }catch(e){
+                console.log("Error", e.message);
+        }finally{
+            spinner.stop();
         }
     };
+
+    // 업체 메뉴 가져오기
+    useEffect( () => {
+        menuGet();
+    },[])
+
+    useEffect(() => {
+        setIsLoading(false);
+    },[explain])
+
+    // 입찰등록 + 스피너 추가할 것
+    const _onParticipate = async() => {
+        try{
+            spinner.start();
+            var result = await postApi();
+            if (!result) {
+              alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+            }else {
+              setUploaded(true);
+                setMenuRecommend('');
+                setEstimatedPrice("");
+                setExplain("");
+                setErrorMessage("아래 정보를 입력해주세요");
+                setDisabled(true);
+                setUploaded(false);
+                setIsLoading(false);
+                navigation.navigate("AuctionDetail",{id: auctionId, reload: true});
+            }
+          }catch(e){
+            alert("Register Error", e.message);
+          }finally{
+            spinner.stop();
+          }
+    };
+
+    const _onFixPress = async() => {
+        try{
+            spinner.start();
+            var result = await postfixApi();
+            if (!result) {
+              alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+            }else {
+              setUploaded(true);
+              if (!disabled) {
+                setMenuRecommend('');
+                setEstimatedPrice("");
+                setExplain("");
+                setErrorMessage("아래 정보를 입력해주세요");
+                setDisabled(true);
+                setUploaded(false);
+                setIsLoading(false);
+                navigation.navigate("AuctionDetail",{id: auctionId, reload: true});
+            }else {
+                alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+              };
+            }
+          }catch(e){
+            alert("Register Error", e.message);
+          }finally{
+            spinner.stop();
+          }
+    }
+
+    const _onCompletePress = () => {
+        if(fix){
+            _onFixPress();
+        }else{
+            _onParticipate();
+        }
+    }
 
     return (
         <Container>
@@ -159,10 +345,10 @@ const AuctionBid = ({ navigation }) => {
                 <TouchableOpacity style={styles.background} onPress={() => setModal(false)} />
                 <MenuContainer>
                     <Title size={22}>메뉴</Title>
-                    {menu.map(item =>
-                        <RowItemContainer onPress={() => { setMenuRecommend(item.name); setModal(false); }}>
-                            <Menu><Label key={item.id}>{item.name}</Label></Menu>
-                            <Menu><Label key={item.id}>{item.price}</Label></Menu>
+                    {menus.map(item =>
+                        <RowItemContainer key={item.menuId} onPress={() => { setMenuRecommend(item.name); setModal(false); }}>
+                            <Menu><Label>{item.name}</Label></Menu>
+                            <Menu><Label>{item.price}원</Label></Menu>
                         </RowItemContainer>
                     )}
                 </MenuContainer>
@@ -171,7 +357,10 @@ const AuctionBid = ({ navigation }) => {
             <Label>예상 가격대</Label>
             <StyledTextInput
                 value={estimatedPrice}
-                onChangeText={text => setEstimatedPrice(text)}
+                onChangeText={text => {
+                    setIsLoading(true);
+                    setEstimatedPrice(text);
+                }}
                 placeholder="예상 가격대를 입력하세요."
                 keyboardType="number-pad"
                 returnKeyType="done"
@@ -181,7 +370,10 @@ const AuctionBid = ({ navigation }) => {
             <Label>어필/설명</Label>
             <StyledTextInput
                 value={explain}
-                onChangeText={text => setExplain(text)}
+                onChangeText={text => {
+                    setIsLoading(true);
+                    setExplain(text)
+                }}
                 placeholder="어필/설명를 입력하세요."
                 returnKeyType="done"
                 textContentType="none" // iOS only
@@ -203,40 +395,5 @@ const styles = StyleSheet.create({
     },
 });
 
-
-export const menu = [
-    {
-        id: 0,
-        name: "메뉴 1",
-        price: "4000원",
-        src: "",
-    },
-    {
-        id: 1,
-        name: "메뉴 2",
-        price: "8000원",
-        src: "",
-    },
-    {
-        id: 2,
-        name: "메뉴 3",
-        price: "5000원",
-        src: "",
-    },
-    {
-        id: 3,
-        name: "메뉴 4",
-        price: "9000원",
-        src: "",
-    },
-    {
-        id: 4,
-        name: "메뉴 5",
-        price: "6000원",
-        src: "",
-    },
-
-
-];
 
 export default AuctionBid;

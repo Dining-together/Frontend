@@ -1,14 +1,11 @@
 import React, {useState, useEffect, useContext} from 'react';
 import styled from "styled-components/native";
 import {Text, Dimensions, FlatList, View, ScrollView, Alert} from "react-native";
-import { IconButton } from "../components";
-import { images } from '../images';
 import { ThemeContext } from "styled-components";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {StoreList} from "../utils/data";
-import * as Location from "expo-location";
+import {LoginContext, ProgressContext, UrlContext} from "../contexts"
 
-const HEIGHT = Dimensions.get("screen").width;
+const WIDTH = Dimensions.get("screen").width;
 
 const Container = styled.View`
     flex: 1;
@@ -17,9 +14,14 @@ const Container = styled.View`
 
 const StoresConteinter = styled.View`
     flex: 1;
-    margin-top: 20px;
 `;
 
+const NodataText = styled.Text`
+    margin-left: ${WIDTH*0.01}%;
+    font-size: 15px;
+    font-weight: bold;
+    color: ${({theme})=> theme.text};
+`;
 
 const ItemContainer = styled.TouchableOpacity`
     flex-direction: row;
@@ -32,14 +34,7 @@ const ItemContainer = styled.TouchableOpacity`
     border-color: ${({ theme }) => theme.text};
 `;
 
-// const StyledImage = styled.Image`
-//     background-color:${({ theme }) => theme.imageBackground};
-//     height: 80;
-//     width: 80;
-//     border-radius: 50px;
-// `;
-
-const StyledImage = styled.View`
+const StyledImage = styled.Image`
     background-color:${({ theme }) => theme.imageBackground};
     height: 80;
     width: 80;
@@ -86,60 +81,112 @@ const ScoreText = styled.Text`
     color:${({ theme }) => theme.background};
 `;
 
-
-const Item = ({item: {url, id, name, ment, distance, score}, onPress, onStarPress, isStar, theme}) => {
-    var sc = Number.parseFloat(score).toFixed(1);
-    return (
-        <ItemContainer onPress={onPress} >
-            {/* <StyledImage source={{uri: url}}/> */}
-            <StyledImage />
-            <ContentContainter>
-                <ContentTitleText>{name}</ContentTitleText>
-                <ContentText>{ment}</ContentText>
-                <ContentText>{distance}M</ContentText>
-            </ContentContainter>
-            <StarBox>
-                {isStar ?
-                            (
-                                <MaterialCommunityIcons name="star" size={40} onPress={onStarPress} color="yellow"
-                                    style={{ marginLeft: 15, marginBottom: 5, opacity: 0.7 }} />
-                            )
-                            : (
-                                <MaterialCommunityIcons name="star-outline" size={40} onPress={onStarPress} color="yellow"
-                                    style={{ marginLeft: 15, marginBottom: 5, opacity: 0.7 }} />
-                            )}
-                </StarBox>
-            <ScoreBox>
-                <MaterialCommunityIcons name="star" size={15} color={theme.background}/>
-                <ScoreText>{sc}</ScoreText>
-            </ScoreBox>
-        </ItemContainer>
-    );
-};
-
-const SearchStore = ({navigation}) => {
+const SearchStore = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
 
+    const {surl} = useContext(UrlContext);
+    const {token, mode} = useContext(LoginContext);
+    const {spinner} = useContext(ProgressContext);
+
     const [isStar, setIsStar] = useState(false);
+    const [searchData, setSearchData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
    
+    const _changeType = (type) => {
+        let text;
+
+        switch(type){
+            case "KOREAN":
+                text = "한식"; break;
+            case "CHINESE":
+                text = "중식"; break;
+            case "JAPANESE":
+                text = "일식"; break;
+            case "WESTERN":
+                text = "양식"; break;
+        }
+        return text;
+    }
+
+    const Item = ({item: {comment, title, storeImagePath, storeType}, onPress, isStar, onStarPress}) => {
+    
+        return (
+            <ItemContainer onPress={onPress} >
+                <StyledImage source={{uri: storeImagePath}}/>
+                <ContentContainter>
+                    <ContentTitleText>{title}</ContentTitleText>
+                    <ContentText>{comment}</ContentText>
+                    <ContentText>{_changeType(storeType)}</ContentText>
+                </ContentContainter>
+                {mode!=="STORE" && (
+                    <StarBox>
+                    {isStar ?
+                                (
+                                    <MaterialCommunityIcons name="star" size={40} onPress={onStarPress} color="yellow"
+                                        style={{ marginLeft: 15, marginBottom: 5, opacity: 0.7 }} />
+                                )
+                                : (
+                                    <MaterialCommunityIcons name="star-outline" size={40} onPress={onStarPress} color="yellow"
+                                        style={{ marginLeft: 15, marginBottom: 5, opacity: 0.7 }} />
+                                )}
+                    </StarBox>
+                )}
+            </ItemContainer>
+        );
+    };
+
+    const handleApi = async () => {
+        let fixedUrl = surl+"/search/store?keyword="+route.params.input;
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+        };
+
+        try {
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            if(res.list!==undefined){
+                setSearchData(res.list);
+            }else{
+                setSearchData([]);
+            }
+            
+        }catch(error) {
+            console.error(error);
+        }finally {
+            spinner.stop();
+        }
+    };
+
+    useEffect(() => {
+        handleApi();
+    },[]);
+
+    useEffect(() => {
+        setIsLoading(false);
+    },[searchData]);
 
     const _onStorePress = item => {navigation.navigate("StoreDetail", {id: item['id']})};
     const _onStarPress = () => {setIsStar(!isStar);}
 
     return (
-        <Container>
-            
-            <ScrollView>
+        <Container>{!isLoading &&
             <StoresConteinter>
-                <FlatList 
-                horizontal={false}
-                keyExtractor={item => item['id'].toString()}
-                data={StoreList}
-                renderItem={({item}) => (
-                    <Item item={item} onPress={()=> _onStorePress(item)} onStarPress={_onStarPress} isStar={isStar} theme={theme}/>
-                )}/>
-            </StoresConteinter>
-            </ScrollView>
+                <ScrollView style={{marginTop: `${WIDTH*0.01}%`}}>
+                    {(searchData.length===0)&& (
+                        <NodataText>검색 결과가 없습니다.</NodataText>
+                    )}
+                    {(searchData.length!==0)&& searchData.map(item => (
+                        <Item item={item} key={item.id} onPress={()=>{_onStorePress(item)}} onStarPress={_onStarPress} isStar={isStar}/>
+                    ))}
+                </ScrollView>
+            </StoresConteinter>}
         </Container>
     );
 };

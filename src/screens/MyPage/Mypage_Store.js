@@ -2,7 +2,11 @@ import React, { useState, useContext, useEffect } from 'react';
 import styled from "styled-components/native";
 import { MypageButton, ProfileImage, SmallButton } from '../../components'
 import {LoginContext, UrlContext, ProgressContext} from "../../contexts";
-import {Alert} from "react-native";
+import {Alert, Dimensions} from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const WIDTH = Dimensions.get("screen").width;
+const HEIGHT = Dimensions.get("screen").height;
 
 const Container = styled.View`
     background-color: ${({ theme }) => theme.background};
@@ -26,7 +30,6 @@ const InfoContainer = styled.View`
 const ProfileContainer = styled.View`
     width: 100%;
     flex-direction: row;
-    align-self: flex-start;
     background-color: ${({ theme }) => theme.background};
     justify-content: space-between;
     align-items: center;
@@ -38,9 +41,14 @@ const ProfileButton = styled.TouchableOpacity`
     align-items: center;
     
 `
+const ProfileNameButton = styled.TouchableOpacity`
+    width: ${WIDTH*0.5};
+    justify-content: center;
+    align-items: center;
+`
+
 const Username = styled.Text`
     font-size: 23px;
-    margin-left: 40px;
     font-weight: bold;
 `;
 
@@ -51,19 +59,25 @@ const LogoutContainer = styled.View`
     justify-content: space-between;
 `;
 
+
 const Mypage_Store = ({ navigation }) => {
-    const {token, setSuccess, doc, storeId} = useContext(LoginContext);
+    const {token, setSuccess, doc, id, setAutoLogin} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const [name, setName] = useState("");
+    const [image, setImage] = useState("");
 
-
-    useEffect(()=>{
+    useEffect(()=> {
         handleApi();
-    },[])
+        // 화면 새로고침
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            handleApi();
+        });
+        return willFocusSubscription;
+    },[]); 
 
     const handleApi = async () => {
-    let fixedUrl = url+"/member/store/"+storeId;
+    let fixedUrl = url+"/member/store/"+id;
 
     let options = {
         method: 'GET',
@@ -76,15 +90,29 @@ const Mypage_Store = ({ navigation }) => {
 
     try {
         spinner.start();
+        
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
+        
         setName(res.data.name);
+        setImage(res.data.path);
     }catch (error) {
         console.error(error);
       } finally {
         spinner.stop();
       }
     };
+
+    const clearAll = async () => {
+        try {
+            spinner.start();
+          await AsyncStorage.clear()
+        } catch(e) {
+          console.error(e);
+        }finally{
+            spinner.stop();
+        }
+      };
 
     return (
         <Container>
@@ -93,13 +121,15 @@ const Mypage_Store = ({ navigation }) => {
                     <ProfileButton onPress={() => {
                         navigation.navigate("StoreInfo");
                     }}>
-                        <ProfileImage />
+                        {(image !== "") && (
+                            <ProfileImage url={image}/>
+                        )}
                     </ProfileButton>
-                    <ProfileButton onPress={() => {
+                    <ProfileNameButton onPress={() => {
                         navigation.navigate("StoreInfo");
                     }}>
                        <Username style={{color: name===""? "white" : "black"}}>{name}</Username>
-                    </ProfileButton>
+                    </ProfileNameButton>
                 </ProfileContainer>
                 <LogoutContainer>
                     <SmallButton title={doc? "서류 변경" : "서류 등록"}
@@ -112,7 +142,12 @@ const Mypage_Store = ({ navigation }) => {
                             Alert.alert(
                                 "", "로그아웃하시겠습니까?",
                                 [
-                                    { text: "확인", onPress: () => setSuccess(false) },
+                                    { text: "확인", 
+                                      onPress: () => {
+                                        clearAll();
+                                        setSuccess(false);
+                                        setAutoLogin(false);
+                                    }},
                                     {
                                       text: "취소",
                                       style: "cancel"
@@ -141,7 +176,10 @@ const Mypage_Store = ({ navigation }) => {
                 }}/>
             </IconContainer>
             <IconContainer>
-                <MypageButton title='로그분석' name='insert-chart' />
+                <MypageButton title='로그분석' name='insert-chart' 
+               onPress={() => {
+                navigation.navigate("LogManageTab");
+                }} />
                 <MypageButton title='채팅관리' name='chat' 
                     onPress={() => {
                         navigation.navigate("ChatManage");

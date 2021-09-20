@@ -1,7 +1,7 @@
 import React,{useContext} from 'react';
 import {ThemeContext} from "styled-components/native";
 import { createStackNavigator } from '@react-navigation/stack'
-import {AuctionDetail,AuctionBid,Message,BidDetail,StoreDetail} from "../screens";
+import {AuctionDetail,AuctionBid,Message,BidDetail,StoreDetail, AuctionBidDetail} from "../screens";
 const Stack = createStackNavigator();
 
 const AuctionDetailStack = ({navigation, route}) => {
@@ -24,6 +24,8 @@ const AuctionDetailStack = ({navigation, route}) => {
                 options={{ headerBackTitle: false, headerTitle: "입찰 상세", headerTitleAlign: 'left' }} />  
         <Stack.Screen name="StoreDetail" component={StoreDetail}
                 options={{ headerBackTitle: false, headerTitle: "업체 상세", headerTitleAlign: 'left' }} />
+        <Stack.Screen name="AuctionBidDetail" component={AuctionBidDetail}
+                options={{ headerBackTitle: false, headerTitle: "입찰 상세", headerTitleAlign: 'left' }} /> 
         </Stack.Navigator>
     );
 };

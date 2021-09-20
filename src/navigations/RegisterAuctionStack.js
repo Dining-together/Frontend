@@ -17,7 +17,7 @@ const RegisterAuctionStack = () => {
             headerTitleAlign: "left",
             cardStyle:{ backgroundColor: theme.backgroundColor},
         }}>
-            <Stack.Screen name="RegisterAuction" component={RegisterAuction} 
+            <Stack.Screen name="RegisterAuction" component={RegisterAuction} initialParams= {{id: "", isChange: false, deadline: null, reservation: null}}
                 options={{
                     headerBackTitle: false, 
                     headerTitleStyle: {fontSize: 25, fontWeight: 'bold'},

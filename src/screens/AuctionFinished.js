@@ -120,6 +120,7 @@ const Auction = ({navigation}) => {
     const [open3, setOpen3] = useState(false);
     const [selected3, setSelected3] = useState(null);
     const [list3, setList3] = useState([
+        {label: "전체", value: "전체"},
         {label: "서울특별시", value: "서울특별시"},
         {label: "인천광역시", value: "인천광역시"},
         {label: "대전광역시", value: "대전광역시"},
@@ -144,16 +145,8 @@ const Auction = ({navigation}) => {
         {label: "시군구 선택", value: "시군구 선택"},
     ]);
 
-    const filterDataList = (data) => {
-        var now = new Date().toJSON();
-        var nowdata = cutDateData(changeDateData(now));
-        
-        let res = data.filter((item) => cutDateData(changeDateData(item.deadline)) <= nowdata);
-        return res;
-    };
-
     const handleApi = async () => {
-        let fixedUrl = aurl+"/auction/auctions";
+        let fixedUrl = aurl+"/auction/auctions/end";
 
         let options = {
             method: 'GET',
@@ -168,7 +161,7 @@ const Auction = ({navigation}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            var list = filterDataList(res["list"]);
+            var list = res["list"];
             setAllData(list);
             setAuctionListData(list);
         }catch(error) {
@@ -235,9 +228,12 @@ const Auction = ({navigation}) => {
             let l = selectsigungoo(selected3);
             let stateList = setRegionList(l, l.length);
             setList4(stateList);
-            list = _filterSelected3(list, selected3);
+            if(selected3!=="전체"){
+                list = _filterSelected3(list, selected3);
+            }
         }
-        if (selected4 !== null) {
+        
+        if (selected4 !== null && selected4!=="전체") {
             list = _filterSelected3(list, selected4);
         }
         setAuctionListData(list);
@@ -271,6 +267,7 @@ const Auction = ({navigation}) => {
                 setOpen={setOpen1}
                 setValue={setSelected1}
                 setItems={setList1}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.23, position: "absolute", left: WIDTH*0.015, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -289,6 +286,7 @@ const Auction = ({navigation}) => {
                 setOpen={setOpen2}
                 setValue={setSelected2}
                 setItems={setList2}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: 12, fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.23, position: "absolute", left: WIDTH*0.25, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -307,6 +305,7 @@ const Auction = ({navigation}) => {
                 setValue={setSelected3}
                 onClose={() => setSelected4(null)}
                 setItems={setList3}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: _checkSize(selected3), fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.25, position: "absolute", left:  WIDTH*0.485, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}
@@ -324,6 +323,7 @@ const Auction = ({navigation}) => {
                 setOpen={setOpen4}
                 setValue={setSelected4}
                 setItems={setList4}
+                showTickIcon={false}
                 textStyle={{color: theme.text, fontSize: _checkSize(selected4), fontWeight: "bold"}}
                 containerStyle={{width: WIDTH*0.25, position: "absolute", right: WIDTH*0.01, top: 10}}
                 arrowIconStyle={{width:  WIDTH*0.03}}

@@ -11,6 +11,7 @@ const HEIGHT = Dimensions.get("screen").height;
 const Container = styled.View`
     align-self: center;
     margin-bottom: 20px;
+    flex-direction: row;
 `;
 
 const StyledImage = styled.Image`
@@ -22,7 +23,7 @@ const StyledImage = styled.Image`
 
 const ButtonContainer = styled.TouchableOpacity`
     background-color: ${({theme}) => theme.imageButtonBackground};
-    position: relative;
+    position: absolute;
     bottom: 0;
     right: 0;
     width: 30px;

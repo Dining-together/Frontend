@@ -4,6 +4,7 @@ import {removeWhitespace, validateEmail} from "../../utils/common";
 import {Button, Input} from "../../components";
 import styled from "styled-components/native";
 import {UrlContext} from "../../contexts";
+import {Alert} from "react-native";
 
 const Container = styled.View`
     flex: 1;
@@ -66,7 +67,7 @@ const AccountFind = ({navigation}) => {
     },[email, confirmed, errorMessage, certification]);
 
     const handleApi = async () => {
-        const response = await fetch(url+`/member/auth/signup/verification?email=${email}`, {
+        const response = await fetch(url+`/member/auth/verify?email=${email}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -84,23 +85,31 @@ const AccountFind = ({navigation}) => {
             alert("이메일을 다시 확인하세요.");
         }else{
             setConfirmed(true);
+            alert("인증번호가 전송되었습니다.");
         }
     };
 
     const handleKeyApi = async() => {
-        const response = await fetch(url+`/member/auth/signup/verification?email=${email}&key=${certification}`);
+        let fixed = url+`/member/auth/verify/password?email=${email}&key=${certification}`
+        const response = await fetch(fixed);
         const res = await response.json();
-        return res["status"];
+        return res["code"];
     };
 
     const _handleAuthButtonPress = async() => {
         const result =  await handleKeyApi();
-        if (result === 500){
+        if (result === 400){
             setCertificated(false);
             setErrorMessage("인증번호가 틀렸습니다.");
-        }else if (result === 200){
+        }else if (result === 500){
             setCertificated(true);
-            navigation.navigate("Login");
+            Alert.alert(
+                "", "비밀번호가 전송되었습니다.\n다시 로그인해주세요.",
+                [{ text: "확인", 
+                onPress: () => {
+                    navigation.navigate("Login");
+                } }]
+            );
         }else {
             setCertificated(false);
             setErrorMessage("다시 시도하세요.");

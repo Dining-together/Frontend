@@ -1,34 +1,55 @@
-# Frontend
+# OICD 공모전 - 회식모아(Dining-together) -Frontend
+<img width="264" alt="image" src="https://user-images.githubusercontent.com/62784314/129598072-57ae7ac1-2192-42da-a3fb-bba8199f56d5.png">
+
+## 프로젝트 소개
+
+경매방식과 위치정보를 활용한 회식장소 선정 및 입찰경매 시스템 개발
+
+## 🛠️ Frontend 기술스택 🛠️
+
+- React Native
+- Expo cli
+
+## :point_down:프로젝트의 자세한 설계과정을 보고싶다면 click :point_down:
+
+<a href="https://github.com/Dining-together/Backend/wiki"><img width="240" alt="image" src="https://user-images.githubusercontent.com/62784314/129601422-07d63d69-2778-4c35-a1dc-5c02a30cceaf.png"></a>
+
+## 디렉터리별 설명
+
+```
+FrontEnd
+├── src
+│   ├── components # components source
+│   ├── contexts # context api
+│   ├── navigateions # @react-navigation
+│   ├── utils 
+│   └── screens # ui screens
+│           ├── Account # Login, Sign up ...
+│           ├── Mypage # Mypage
+│           ├── StoreList # Store tab, map
+│           └── auction.js etc # Auction, Bid, Search
+
+```
+
+## Get started
 
 
-# 규칙
+```
+# Douwnload Code
+git clone https://github.com/Dining-together/Frontend.git
 
----
+# 디렉터리 이동
+cd Frontend
 
--브랜치는 제품 백로그 단위로 생성한다 
-- 브랜치를 생성하기전 제품 백로그 단위로 issue를 생성하여 스프린트 백로그를 정리한다.
-- 스프린트 백로그는 pull request를 통해 생성한다.
-- commit 할때 Commit Message Rule 을 지켜준다.
+# Install Expo 
+npm install -g expo-cli
 
----
+# Install dependencies
+npm install
 
-## Commit Message Rule
+# Start the App
+# - The Expo CLI will provide options to open in [web, android or iOS]
+npm start
+```
 
-    - feat : 새로운 기능 추가
-    - update : 버전 등 업데이트
-    - fix : 수정
-    - bug : 버그 수정
-    - docs : 문서
-    - style : 코드 스타일 혹은 포맷 등에 관한 커밋
-    - refactor : 코드 리펙토링
-    - test : 테스트 코드 수정
 
----
-
-## Pull Request Rule
-
-- 브랜치의 이름은 feature/제품 백로그 단위로 설정한다. <br>
-    ex) feature/login
-- pull request의 경우에는 스프린트 백로그를 기준으로 생성하고 제목은 브랜치명/이슈 제목으로 한다. <br>
-   ex) feature/login 로그인 유효성 검사
-- Merge Request의 경우 내용을 resolve: #{이슈번호}  로 한다. ( 같이 closed 하기 위해 )

@@ -1,13 +1,13 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext, useLayoutEffect, useRef} from 'react';
 import styled from "styled-components/native";
 import {MaterialCommunityIcons} from "@expo/vector-icons";
-import {Dimensions,Text,FlatList,View,ScrollView} from "react-native";
+import {Dimensions,Text, View, ScrollView, TouchableOpacity} from "react-native";
 import { Button, SmallButton } from '../../components';
 
+import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
-
 
 const Container = styled.View`
     background-color: ${({ theme }) => theme.background};
@@ -39,38 +39,14 @@ const ReviewImage = styled.Image`
     width: ${HEIGHT*0.12}px;
 `;
 
-    
-
-
-const Stars = ({onPress, setStar, star}) => {
-    var list = [];
-    let i = 0;
-
-    const _onPress = i => {
-        setStar(i);
-    }
-
-    for(i = 0; i<5; i++){
-        
-        if( i < star){
-            list.push(
-                <MaterialCommunityIcons key={i} name="star" size={40} color="#F2EC36"
-                    setStar={setStar}
-                    onPress={(e) => {_onPress(e.key)}}
-            />)
-        }
-        else{
-            list.push(
-                <MaterialCommunityIcons key={i} name="star-outline" size={40} color="#F2EC36"
-                    setStar={setStar}
-                    onPress={(e) => {_onPress(e.key)}}
-            />)
-        }
-    }
-    //console.log(list);
-
-    return list;
-};
+const ErrorText = styled.Text`
+    align-items: flex-start;
+    width: 100%;
+    height: 20px;
+    margin-bottom: 10px;
+    line-height: 20px;
+    color: ${({ theme }) => theme.errorText};
+`;
 
 const ReviewImages = ( { item: { uri }}) => {
     return (
@@ -81,45 +57,174 @@ const ReviewImages = ( { item: { uri }}) => {
 
 const ReviewWrite = ({navigation, route}) => {
 
-    const [text, setText] = useState('');
-    const [star, setStar] = useState(0);
     const [photos, setPhotos] = useState([]);
+
+    const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const {token, doc, id} = useContext(LoginContext);
+
+    const [content, setContent] = useState('');
+    let successBidId = route.params.successBidId;
+
+
+    const [starRating, setStarRating] = useState(0);
+    const [maxRating, setMaxRating] = useState([1, 2, 3, 4, 5]);
+
+    const [errorMessage, setErrorMessage] = useState("내용을 입력해주세요.");
+    const [isLoading, setIsLoading] = useState(false);
+    const [uploaded, setUploaded] = useState(false);
+    const [disabled, setDisabled] = useState(true);
+
+    const didMountRef = useRef();
+
+    const Star = () => {
+        return (
+        <View style={{justifyContent: 'center', flexDirection: 'row',}}>
+            {maxRating.map((item, key) => {
+            return (
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    key={item}
+                    onPress={() => {setStarRating(item); setIsLoading(true);}}>
+                    {item <= starRating ? 
+                        <MaterialCommunityIcons name="star" size={40} color="#F2EC36" /> :
+                        <MaterialCommunityIcons name="star-outline" size={40} color="#F2EC36"/>}
+                </TouchableOpacity>
+            );
+            })}
+        </View>
+        );
+    };
+
+
 
     useEffect(() => {
         if (route.params.photos) {
             setPhotos(route.params.photos);
-            console.log(route.params.photos);
+             
         }
       }, [route.params.photos, photos]);
 
+      //에러 메세지 설정 
+    useEffect(() => {
+        if (didMountRef.current) {
+            let _errorMessage = "";
+            if (!content) {
+                _errorMessage = "리뷰 내용을 입력해주세요.";
+            }else if(starRating === 0){
+                _errorMessage = "별점을 선택해주세요.";
+            }
+            else {
+                _errorMessage = "";
+            }
+            setErrorMessage(_errorMessage);
+
+        } else {
+            didMountRef.current = true;
+        }
+    }, [content, starRating]);
+
+    useEffect(() => {
+        setDisabled(!(content && !errorMessage && !isLoading));
+    }, [content, errorMessage, isLoading]);
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                disabled ? (<MaterialCommunityIcons name="check" size={35} onPress={_onSavePress}
+                    style={{ marginRight: 10, marginBottom: 3, opacity: 0.3 }} />)
+                    : (<MaterialCommunityIcons name="check" size={35} onPress={_onSavePress}
+                        style={{ marginRight: 10, marginBottom: 3, opacity: 1 }} />)
+            )
+        });
+    }, [disabled]);
+
+    useEffect(() => {
+        setIsLoading(false);
+    },[content, starRating])
+
+    // 리뷰 post (리뷰내용 + 사진들)
+    const postApi = async () => {
+        let fixedUrl = url+'/auction/'+`${successBidId}`+"/review"; 
+       
+        let formData = new FormData();
+
+        photos.map( item => formData.append("files", {uri: item.uri, name: item.name, type: item.type}));
+
+        formData.append("score", starRating);
+        formData.append("content", content);
+        formData.append("successBidId", successBidId);
 
 
-    const _onSavePress = () => {
+         
+
+        let options = {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                "Content-Type" : "multipart/form-data",
+                'X-AUTH-TOKEN' : token,
+            },
+            body: formData,
+
+        };
+        try {
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+
+            
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          }
+
+    }
+
+    const _onSavePress = async() => {
         // 저장 완료 후 돌아가기
-        navigation.navigate("UseManage");
+        try{
+            spinner.start();
+            const result = await postApi();
+
+            if (!result) {
+                alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+              }else {
+                setUploaded(true);
+                if (!disabled) {
+                  setContent('');
+                  setStarRating(0);
+                  setPhotos([]);
+                  setDisabled(true);
+                  setUploaded(false);
+                  setIsLoading(false);
+                  navigation.navigate("UseManage");
+              }else {
+                  alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
+                };
+              }
+        }catch(e){
+                console.log("Error", e.message);
+        }finally{
+            spinner.stop();
+        }      
     }
     
     const _onPhotoPress = () => {
         navigation.navigate("MultipleImage",{type: "Review"});
     }
 
-    const _onStarPress = () => {
-        console.log("console"+star);
-    }
 
     return (
         <Container>
             
             <StarContainer>
                 <Text style={{fontSize: 23, marginRight: '2%'}}>별점</Text>
-                <Stars 
-                    star = {star}
-                    setStar = {setStar}
-                    onPress = {_onStarPress}
-                />
+                <Star />
             </StarContainer>
+
             <StyledTextInput
-                value={text}
+                value={content}
                 placeholder="리뷰를 남겨주세요."
                 returnKeyType="done"
                 maxLength={30}
@@ -127,16 +232,16 @@ const ReviewWrite = ({navigation, route}) => {
                 textAlignVertical={'top'}
                 textContentType="none" // iOS only
                 underlineColorAndroid="transparent" // Android only
-                onChangeText={text => setText(text)}
+                onChangeText={text => {setContent(text); setIsLoading(true);}}
 
             />
+            {uploaded && disabled && <ErrorText>{errorMessage}</ErrorText>}
             <SmallButton 
                 title="사진첨부" 
                 containerStyle ={{width: '25%', marginTop: '3%'}}
                 onPress={_onPhotoPress}
             />
 
-            {console.log(photos)}
 
             <ScrollView 
                 style={{margin : '2%', height: HEIGHT*0.13, }} 
@@ -149,7 +254,6 @@ const ReviewWrite = ({navigation, route}) => {
                 )} 
             </ScrollView>
     
-            <Button title="저장" onPress={_onSavePress}/>
             
             
         </Container>

@@ -8,14 +8,14 @@ const LoginContext = createContext({
     doc: false,
     token: null,
     autoLogin: false,
-    storeId : null,
+    id : null,
     setSuccess: () => {},
     setAllow: () => {},
     setMode: () => {},
     setDoc: () => {},
     setToken: () => {},
     setAutoLogin: () => {},
-    setStoreId: () => {},
+    setId: () => {},
 });
 
 const LoginProvider = ({children}) => {
@@ -25,7 +25,7 @@ const LoginProvider = ({children}) => {
     const [doc, setDoc] = useState(false);
     const [token, setToken] = useState(null);
     const [autoLogin, setAutoLogin] = useState(false);
-    const [storeId, setStoreId] = useState(null);
+    const [id, setId] = useState(null);
 
     const value = {
         success, //로그인 성공 여부
@@ -40,26 +40,56 @@ const LoginProvider = ({children}) => {
         setToken,
         autoLogin,
         setAutoLogin,
-        storeId,
-        setStoreId,
+        id,
+        setId,
     };
 
-    const setData = (token, autoLogin, allow, mode, doc, storeId) => {
+    const setData = (token, autoLogin, allow, mode, doc, id) => {
         let data = {
             token: token,
             autoLogin: autoLogin,
             allow: allow,
             mode: mode,
             doc: doc,
-            storeId: storeId,
+            id: id,
         };
-        AsyncStorage.setItem('user_infomation', JSON.stringify(data));
-        console.log(data);
     };
 
     useEffect(() => {
-        setData(token, autoLogin, allow, mode, doc, storeId);
-    },[token, autoLogin, allow, mode, doc, storeId]);
+        setData(token, autoLogin, allow, mode, doc, id);
+    },[token, autoLogin, allow, mode, doc, id]);
+
+    useEffect(()=> {
+        console.log("itss id")
+        if(autoLogin && id!==null){
+            var UId = {id : id};
+            AsyncStorage.mergeItem("UserId", JSON.stringify(UId));
+        }
+    },[id, autoLogin]);
+
+    useEffect(()=> {
+        console.log("itss mode")
+        if(autoLogin && mode!==null){
+            var UMd = {mode : mode};
+            AsyncStorage.mergeItem("UserMode", JSON.stringify(UMd));    
+        }
+    },[mode ,autoLogin]);
+
+    useEffect(()=>{
+        console.log("itss doc")
+        if(autoLogin && mode ==="Store"){
+            var UDc = {doc : doc};
+            AsyncStorage.mergeItem("UserDoc", JSON.stringify(UDc));
+        }
+    },[doc, autoLogin]);
+
+    useEffect(()=>{
+        console.log("itss allow")
+        if(autoLogin){
+            var UAl = {allow: allow};
+            AsyncStorage.mergeItem("UserAllow", JSON.stringify(UAl));
+        }
+    },[allow]);
 
     return (
         <LoginContext.Provider value={value}>

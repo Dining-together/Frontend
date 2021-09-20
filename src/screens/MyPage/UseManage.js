@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
-import {UseList} from "../../utils/data";
+import React, {useState, useContext, useEffect} from 'react';
 import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import { SmallButton } from '../../components';
+import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
+import moment from "moment";
 
 const UseContainer = styled.View`
     flex-direction: row;
@@ -52,28 +53,25 @@ const ButtonContainer = styled.View`
 
 `;
 
-const Item = ({item: {id, src, name, menu, desc, bidPrice, date, reviewUploaded}, onReviewPress, onUseDetail}) => {
+const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, onUseDetail}) => {
     return (
         <UseContainer>
             <ImageContainer>
                 <StyledImage source={{ uri: src }} rounded={false} />
             </ImageContainer>
             <TextContainer>
-                <NameTitle>{name}</NameTitle>
-                <DescText>낙찰가 {bidPrice}원</DescText>
+                <NameTitle>{storeName}</NameTitle>
+                <DescText>낙찰가 {price}원</DescText>
                 <DescText>메뉴 {menu}</DescText>
                 <ButtonContainer>
                     <SmallButton 
-                        title={reviewUploaded ? "리뷰완료" : "리뷰쓰기" }
+                        title={review ? "리뷰완료" : "리뷰쓰기" }
                         onPress={onReviewPress} 
-                        containerStyle={{width: '30%', height: '80%', marginRight: '4%'}}
-                        disabled={reviewUploaded}
-                        uploaded={reviewUploaded}
+                        containerStyle={{width: '40%', height: '80%', marginRight: '4%'}}
+                        disabled={review}
+                        uploaded={review}
                         />
-                    <SmallButton 
-                        title="이용상세" 
-                        onPress={onUseDetail} 
-                        containerStyle={{width: '30%', height: '80%'}}/>
+                    
                 </ButtonContainer>
             </TextContainer>
 
@@ -83,24 +81,78 @@ const Item = ({item: {id, src, name, menu, desc, bidPrice, date, reviewUploaded}
 
 
 const UseManage = ({navigation}) => {
-    const [data, setData] = useState(UseList);
+    const {aurl} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const {token} = useContext(LoginContext);
 
-    const _onReviewPress = () => {
-        navigation.navigate("ReviewWrite");
+    const [list, setList] = useState([]);
+
+    const getApi = async (url) => {
+
+       
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token
+            },
+
+        };
+        try {
+            spinner.start();
+            let response = await fetch(url,options);
+            let res = await response.json();
+            
+
+            setList(res.list);
+            
+
+            return res["success"];
+
+          } catch (error) {
+            console.error(error);
+          } finally {
+            spinner.stop();
+          }
+    }
+
+
+    useEffect( () => {
+        getApi(aurl+"/auction/user/bids");
+
+        // 화면 새로고침
+        const willFocusSubscription = navigation.addListener('focus', () => {
+            getApi(aurl+"/auction/user/bids");
+        });
+
+        return willFocusSubscription;
+
+    }, []);
+
+    const _onReviewPress = item => {
+        const moment = require('moment');
+        const today = moment().format('YYYYMMDDhhmm');
+        const reservation = moment(item.reservation).format('YYYYMMDDhhmm');
+         
+        if(reservation < today){
+            navigation.navigate("ReviewWrite", {successBidId : item['successBidId']});
+        }
+        else{
+            alert("예약 시간 후에 리뷰를 작성할 수 있습니다.");
+        }
     };
 
-    const _onUseDetail = item => {
-        navigation.navigate("OrderDetail", {name: item['id']});
-    };
 
     return (
         <FlatList 
             horizontal={false}
-            keyExtractor={item => item['id'].toString()}
-            data={data}
+            keyExtractor={item => item['successBidId'].toString()}
+            data={list}
             renderItem={({item}) => (
                 <Item item={item} 
-                    onReviewPress={_onReviewPress}
+                    onReviewPress={() => _onReviewPress(item)}
                     onUseDetail={() => _onUseDetail(item)}
                 />
 

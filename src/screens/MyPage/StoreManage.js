@@ -76,8 +76,9 @@ const ButtonContainer = styled.View`
 
 const StoreImage = styled.Image`
     background-color:${({theme}) => theme.imageBackground};
-    height: ${HEIGHT*0.12}px;
-    width: ${HEIGHT*0.12}px;
+    height: ${HEIGHT*0.2}px;
+    width: ${HEIGHT*0.35}px;
+    margin-top: 2%;
 `;
 
 
@@ -85,17 +86,19 @@ const StoreManage = ({ navigation }) => {
 
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
-    const {token, doc, storeId} = useContext(LoginContext);
+    const {token, doc, id} = useContext(LoginContext);
 
 
     // 업체 기본정보
-    const [phoneNumber, setPhoneNumber] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("first");
     const [address, setAddress] = useState("");
     const [storeType, setStoreType] = useState("");
     const [openTime, setOpeningTime] = useState('');
     const [closeTime, setClosingTime] = useState('');
     const [lat, setLat] = useState("");
     const [lon, setLon] = useState("");
+    const [ment, setMent] = useState("");
+    const [storeImages, setStoreImages] = useState([]);
 
     // 업체 메뉴 리스트
     const [menus, setMenus] = useState([]);
@@ -126,7 +129,7 @@ const StoreManage = ({ navigation }) => {
         navigation.navigate("StoreBasicChange",
         { phoneNumber: phoneNumber, address: address, storeType: storeType, 
             openTime: setTime(openTime), closeTime: setTime(closeTime), selectedType: storeType,
-            openT: openTime, closeT: closeTime, lat: lat, lon: lon});
+            openT: openTime, closeT: closeTime, lat: lat, lon: lon, ment: ment});
     };
 
     // 업체 편의정보 수정 
@@ -178,7 +181,6 @@ const StoreManage = ({ navigation }) => {
             spinner.start();
             let response = await fetch(url,options);
             let res = await response.json();
-
             return res;
 
           } catch (error) {
@@ -190,12 +192,11 @@ const StoreManage = ({ navigation }) => {
 
     // 업체 정보들 불러오기
     const infoGet = async () => {
-        let fixedUrl =url+'/member/store/'+`${storeId}`;
+        let fixedUrl =url+'/member/store/'+`${id}`;
 
         try{
             spinner.start();
             const res =  await getApi(fixedUrl);
-
 
             if(res.success){
                 // 기본정보 등록되어있으면 값 바꿈
@@ -207,6 +208,8 @@ const StoreManage = ({ navigation }) => {
                     setClosingTime(res.data.closedTime);
                     setLat(res.data.latitude);
                     setLon(res.data.longitude);
+                    setMent(res.data.comment);
+                    setStoreImages(res.data.storeImages);
                 }
                 // 편의정보 등록되어있으면 값 바꿈
                 if(res.data.facility != null){
@@ -226,7 +229,7 @@ const StoreManage = ({ navigation }) => {
 
     // 메뉴 불러오기(menus 설정)
     const menuGet = async() => {
-        let fixedUrl = url+'/member/'+`${storeId}`+'/menus';
+        let fixedUrl = url+'/member/'+`${id}`+'/menus';
         
         try{
             spinner.start();
@@ -470,7 +473,8 @@ const StoreManage = ({ navigation }) => {
             <KeyboardAwareScrollView
                 extraScrollHeight={20}
             >
-                {/* 업체 기본정보 */}
+                {phoneNumber!=="" && (
+                    <>
                 <View style={{marginLeft: 10}}>
                     <DescTitle size={23}>업체 기본정보</DescTitle>
                     <DescTitle size={12}>(기본 정보가 입력되어야 업체 조회 리스트에 등록됩니다.)</DescTitle>
@@ -480,7 +484,7 @@ const StoreManage = ({ navigation }) => {
                         label="업체 전화번호"
                         TextChange
                         onChangePress={_onBasicPress}
-                        value={phoneNumber}
+                        value={phoneNumber!== "first"? phoneNumber: ""}
                         editable={false}
                     />
                     <ManageText 
@@ -493,8 +497,16 @@ const StoreManage = ({ navigation }) => {
                         value={openTime !== '' ? setTime(openTime)+" ~ "+setTime(closeTime) : ""}
                         editable={false}
                     />
+                    <ManageText 
+                        label="간단한 설명"
+                        value={ment}
+                        editable={false}
+                    />
                     <RowItemContainer>
                         <DescTitle>업체 사진</DescTitle>
+                        {storeImages.map( item => 
+                            <StoreImage source={{uri : item.path}} key = {item.id}/>
+                        )}
                     </RowItemContainer>
                     <ManageText 
                         label="업체유형"
@@ -558,7 +570,8 @@ const StoreManage = ({ navigation }) => {
                     {menus.map(item => (
                         
                         <RowItemContainer key={item.menuId}>
-                            <View style={{flexDirection: 'row', justifyContent: 'space-between', }}>
+                            <StoreImage source={{uri : item.path}}/>
+                            <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: '3%'}}>
                                 <Label>이름 : {item.name}</Label>
                                 <Label>가격 : {item.price}원</Label>
                                 <SmallButton title="삭제" onPress={() => {_onMenuDelete(item.menuId);}} containerStyle={{ width: '20%', }}/>
@@ -595,8 +608,8 @@ const StoreManage = ({ navigation }) => {
                         text={_setList()}
                     />
                     
-                </InfoContainer>
-                
+                </InfoContainer></>
+                )}
             </KeyboardAwareScrollView>
         </Container>
 

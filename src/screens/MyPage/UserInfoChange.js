@@ -164,7 +164,7 @@ const  UserInfoChange = ({navigation, route}) => {
     // 서버 put 처리 (회원 정보 수정)
     const putApi = async (url) => {
 
-        console.log(url);
+         
 
         let options = {
             method: 'PUT',
@@ -188,7 +188,7 @@ const  UserInfoChange = ({navigation, route}) => {
         try {
             let response = await fetch(url,options);
             let res = await response.json();
-            console.log(res);
+          
 
             return res["success"];
 
@@ -211,7 +211,7 @@ const  UserInfoChange = ({navigation, route}) => {
             let formData = new FormData();
             formData.append('file', { uri: photo, name: filename, type: type });
 
-            console.log(formData);
+             
             let options = {
                 method: 'POST',
                 headers: {
@@ -226,7 +226,7 @@ const  UserInfoChange = ({navigation, route}) => {
                 let response = await fetch(fixedUrl, options);
                 let res = await response.json();
 
-                console.log(res);
+               
                 return res["success"];
                 
                 
