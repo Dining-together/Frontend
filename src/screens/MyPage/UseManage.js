@@ -3,7 +3,11 @@ import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import { SmallButton } from '../../components';
 import {UrlContext, ProgressContext, LoginContext} from "../../contexts";
-import moment from "moment";
+
+
+var moment = require('moment-timezone');
+moment.tz.setDefault("Asia/Seoul");
+exports.moment = moment;
 
 const UseContainer = styled.View`
     flex-direction: row;
@@ -53,11 +57,11 @@ const ButtonContainer = styled.View`
 
 `;
 
-const Item = ({item: {id, src, storeName, menu, price, review}, onReviewPress, onUseDetail}) => {
+const Item = ({item: {id, path, storeName, menu, price, review}, onReviewPress, onUseDetail}) => {
     return (
         <UseContainer>
             <ImageContainer>
-                <StyledImage source={{ uri: src }} rounded={false} />
+                <StyledImage source={{ uri: path }} rounded={false} />
             </ImageContainer>
             <TextContainer>
                 <NameTitle>{storeName}</NameTitle>
@@ -89,8 +93,6 @@ const UseManage = ({navigation}) => {
 
     const getApi = async (url) => {
 
-       
-
         let options = {
             method: 'GET',
             headers: {
@@ -105,7 +107,7 @@ const UseManage = ({navigation}) => {
             let response = await fetch(url,options);
             let res = await response.json();
             
-
+            console.log(res.list)
             setList(res.list);
             
 
@@ -132,10 +134,15 @@ const UseManage = ({navigation}) => {
     }, []);
 
     const _onReviewPress = item => {
-        const moment = require('moment');
-        const today = moment().format('YYYYMMDDhhmm');
-        const reservation = moment(item.reservation).format('YYYYMMDDhhmm');
-         
+        const today = moment().format('YYYYMMDDHHmm');
+        var date = item.reservation;
+        var year = date.slice(0,4)
+        var month = date.slice(5,7)
+        var day = date.slice(8,10)
+        var hour = date.slice(11,13)
+        var minute = date.slice(14,16)
+        var d = year+"-"+month+"-"+day+" "+hour+":"+minute;
+        var reservation = moment(d, "YYYY-MM-DD HH:mm").format('YYYYMMDDHHmm');
         if(reservation < today){
             navigation.navigate("ReviewWrite", {successBidId : item['successBidId']});
         }

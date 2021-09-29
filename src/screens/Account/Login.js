@@ -95,7 +95,7 @@ const ButtonText = styled.Text`
 const Login = ({navigation}) => {
     const {spinner} = useContext(ProgressContext);
     const {url} = useContext(UrlContext);
-    const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setDoc, setId} = useContext(LoginContext);
+    const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setDoc, setId, setLatitude, setLongitude} = useContext(LoginContext);
     const [userId, setUserId] = useState("");
     const [password, setPassword] = useState("");
     const [disabled, setDisabled] = useState(true);
@@ -199,6 +199,9 @@ const Login = ({navigation}) => {
         const {status} = await Location.requestBackgroundPermissionsAsync();
         if (status === "granted"){ 
             setAllow(true);
+            let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
+            setLatitude(location.coords.latitude);
+            setLongitude(location.coords.longitude);
         }else{
             setAllow(false);
         }

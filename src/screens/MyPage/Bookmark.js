@@ -147,13 +147,14 @@ const Bookmark = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-
+            
             
             const store = {
                 id: res.data.id,
                 name : res.data.name,
                 type : res.data.storeType,
                 location : res.data.addr,
+                src: res.data.path,
             }
             newadd.push(store);
 
@@ -187,13 +188,15 @@ const Bookmark = ({navigation, route}) => {
             let res = await response.json();
 
             const data = res.data;
-            
+            console.log("star!")
+            console.log(data)
             const auction = {
                 id : data.auctionId,
                 name : data.title,
                 menu : data.storeType,
                 type : data.groupType + " " + data.groupCnt + "명",
                 location : data.addr,
+                src: data.path,
             };
 
             newadd.push(auction);

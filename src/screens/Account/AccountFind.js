@@ -3,7 +3,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import {removeWhitespace, validateEmail} from "../../utils/common";
 import {Button, Input} from "../../components";
 import styled from "styled-components/native";
-import {UrlContext} from "../../contexts";
+import {UrlContext, ProgressContext} from "../../contexts";
 import {Alert} from "react-native";
 
 const Container = styled.View`
@@ -38,6 +38,7 @@ const AccountFind = ({navigation}) => {
     const [disabled, setDisabled] = useState(true);
     const {url} = useContext(UrlContext);
     const didMountRef = useRef();
+    const {spinner} = useContext(ProgressContext);
 
     useEffect(()=> {
 
@@ -73,9 +74,15 @@ const AccountFind = ({navigation}) => {
                 "Content-Type": "application/json"
             },
             });
-
-        const res = await response.json();
-        return res["success"];    
+        try{    
+            spinner.start()
+            const res = await response.json();
+            return res["success"];    
+        }catch(e) {
+            console.error(e)
+        }finally{
+            spinner.stop()
+        }
     };
 
      // 서버 연동후 이메일 인증 확인 
@@ -90,10 +97,17 @@ const AccountFind = ({navigation}) => {
     };
 
     const handleKeyApi = async() => {
-        let fixed = url+`/member/auth/verify/password?email=${email}&key=${certification}`
-        const response = await fetch(fixed);
-        const res = await response.json();
-        return res["code"];
+        try {
+            spinner.start()
+            let fixed = url+`/member/auth/verify/password?email=${email}&key=${certification}`
+            const response = await fetch(fixed);
+            const res = await response.json();
+            return res["code"];
+        }catch(e){
+            console.error(e)
+        }finally{
+            spinner.stop()
+        }
     };
 
     const _handleAuthButtonPress = async() => {
@@ -101,7 +115,7 @@ const AccountFind = ({navigation}) => {
         if (result === 400){
             setCertificated(false);
             setErrorMessage("인증번호가 틀렸습니다.");
-        }else if (result === 500){
+        }else if (result === 0){
             setCertificated(true);
             Alert.alert(
                 "", "비밀번호가 전송되었습니다.\n다시 로그인해주세요.",

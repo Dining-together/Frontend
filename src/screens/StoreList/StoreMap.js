@@ -128,7 +128,7 @@ const StoreMap = ({navigation, route}) => {
     const mapRef = useRef();
     
     const theme = useContext(ThemeContext);
-    const {token, mode, setAllow} = useContext(LoginContext);
+    const {token, mode, stores} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
 
@@ -232,32 +232,11 @@ const StoreMap = ({navigation, route}) => {
     };
 
     const handleApi = async () => {
-        let fixedUrl = url+"/member/stores";
-
-        let options = {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-AUTH-TOKEN' : token,
-            },
-        };
-
-        try {
-            spinner.start();
-            let response = await fetch(fixedUrl, options);
-            let res = await response.json();
-            let list = res["list"];
-            setStoreListData(list);
+            setStoreListData(stores);
             await getScope();
             if(mode!=="STORE"){
                 await handleStarApi();
             }
-        }catch(error) {
-            console.error(error);
-        }finally {
-            spinner.stop();
-        }
     }
 
     const checkScope = (lat, lon) => {

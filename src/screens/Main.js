@@ -8,6 +8,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ThemeContext } from "styled-components";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 import {_sortLatest, cutDateData, changeListData, createdDate, changeCreatedDateData, removeWhitespace, _sortPopular} from "../utils/common";
+import * as Location from "expo-location";
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
@@ -196,7 +197,7 @@ const Store = ({ item: { id, storeName, score, reviews, foodType, path }, onPres
 const Main = ({ navigation }) => {
     const theme = useContext(ThemeContext);
     const { aurl, url} = useContext(UrlContext);
-    const {allow, autoLogin, doc, mode, token} = useContext(LoginContext);
+    const {allow, autoLogin, doc, mode, token, latitude, longitude, setLatitude, setLongitude, setAllow} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
 
     const [input, setInput] = useState("");
@@ -205,6 +206,7 @@ const Main = ({ navigation }) => {
     const [latestAuctions, setLatestAuctions] = useState("first");
     const [popularAuctions, setPopularAuctions] = useState("first");
     const [isLoading, setIsLoading] = useState(true);
+    const [allowLoc, setAllowLoc] = useState(allow);
 
     const _handleNoticePress = () => { navigation.navigate("Notice") };
 
@@ -220,6 +222,18 @@ const Main = ({ navigation }) => {
     const _handleStorePress = item => {
         navigation.navigate('StoreDetail', { id: item.id, name: item.storeName })
     };
+
+    const _getLocPer = async () => {
+        try{
+            const {status} = await Location.requestForegroundPermissionsAsync();
+            if(status === "granted"){
+                setAllow(true);
+                setAllowLoc(true);
+            };
+        }catch (e) {
+            console.log(e);
+        };
+      };
 
     const handleAuctionApi = async () => {
         let fixedUrl = aurl+"/auction/auctions";
@@ -250,10 +264,34 @@ const Main = ({ navigation }) => {
         }
     };
 
-    useEffect(()=> {
+       //현위치 
+       const getLocation = async () => {
+        try{
+            spinner.start()
+            let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
+            setLatitude(location.coords.latitude);
+            setLongitude(location.coords.longitude);
+        }catch(e){
+            console.error(e);
+        }finally{
+            spinner.stop();
+        }
+};
+
+    useEffect(()=>{
         handleAuctionApi();
-       
     },[]);
+
+    useEffect(()=> {
+        if(latitude===null || longitude===null){
+            if(!allowLoc){
+                _getLocPer();
+            }else{
+                getLocation();
+            }
+        }
+    },[allowLoc]);
+
 
 
     return (
