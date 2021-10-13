@@ -2,7 +2,7 @@
 import React, {useContext} from 'react';
 import {ThemeContext} from "styled-components/native";
 import {createStackNavigator} from "@react-navigation/stack";
-import {Mode,Login,Signup, AccountFind} from "../screens";
+import {Mode,Login,Signup, AccountFind, KakaoLogin} from "../screens";
 import {MaterialCommunityIcons} from "@expo/vector-icons";
  
 const Stack = createStackNavigator();
@@ -25,6 +25,7 @@ const AuthStack = () => {
         }}>
             
             <Stack.Screen name="Login" component={Login} options={{headerBackTitle: false, headerTitle: " "}} />
+            <Stack.Screen name="KakaoLogin" component={KakaoLogin} options={{headerBackTitle: false, headerTitle: " "}} />
             <Stack.Screen name="Signup" component={Signup} options={{headerBackTitle: false, headerTitle: " "}}/>
             <Stack.Screen name="Mode" component={Mode} options={{headerBackTitle: false, headerTitle:" "}}/>
             <Stack.Screen name = "AccountFind" component={AccountFind} options={{headerBackTitle: false, headerTitle:" "}}/>
