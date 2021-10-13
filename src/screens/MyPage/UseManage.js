@@ -89,7 +89,6 @@ const UseManage = ({navigation}) => {
 
     const getApi = async (url) => {
 
-       
 
         let options = {
             method: 'GET',
