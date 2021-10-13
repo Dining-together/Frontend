@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import {chatrooms} from "../../utils/data";
 import styled from "styled-components/native";
 import {FlatList} from 'react-native';
 import moment from 'moment';
+import {UrlContext, ProgressContext, LoginContext} from '../../contexts';
 
 const AlertContainer = styled.TouchableOpacity`
     flex: 1;
@@ -57,18 +58,18 @@ const DescText = styled.Text`
     color: ${({theme})=> theme.text};
 `;
 
-const Alert = ({item: {id, src, name, desc, time}, onPress}) => {
+const Alert = ({item: {roomId, user}, onPress}) => {
     return (
         <AlertContainer onPress={onPress}>
             <ImageContainer>
-                <StyledImage source={{uri: src}} />
+                <StyledImage source={{uri: user["path"]}} />
             </ImageContainer>
             <TextContainer>
                 <TitleContainer>
-                    <NameTitle>{name}</NameTitle>
-                    <TimeText>{getDateOrTime(time)}</TimeText>
+                    <NameTitle>{user.name}</NameTitle>
+                    {/* <TimeText>{getDateOrTime(time)}</TimeText> */}
                 </TitleContainer>
-                <DescText>{desc}</DescText>
+                <DescText>클릭하여 채팅을 시작하세요</DescText>
                 </TextContainer>
         </AlertContainer>
     );
@@ -80,20 +81,105 @@ const getDateOrTime = ts => {
     return moment(ts).format(now.diff(target, 'days') > 0 ? 'YY/MM/DD' : 'HH:mm' );
 };
 
+
+
+
 const ChatManage = ({navigation}) => {
-    const [data, setData] = useState(chatrooms);
+    const [data, setData] = useState([]);
+    const {token, mode, id} = useContext(LoginContext);
+    const {curl, url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
+    const [userName, setUserName] = useState("");
+    
+
+    const getNameApi = async() => {
+        if(mode==="CUSTOMER"){
+            var fixedUrl = url+"/member/customer";
+        }else{
+            var fixedUrl = url+"/member/store";
+        }
+        
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+        };
+
+    try {
+        spinner.start();
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        setUserName(res.data.name);
+
+      } catch (error) {
+        console.error(error);
+      } finally {
+        spinner.stop();
+      }
+        };
+
+    const filterList = async(list) => {
+        let users = [];
+        if(mode === "STORE"){
+            list.map(l => users.push({user: l.customer, roomId: l.id}));
+        }else{
+            list.map(l => users.push({user: l.store, roomId: l.id}));
+        }
+        return users;
+    };
+
+    // 채팅방 리스트 
+ const getListApi = async () => {
+    let fixedUrl = curl+"/chat/user_room";
+    
+
+    let options = {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-AUTH-TOKEN' : token,
+        },
+    };
+
+    try {
+        spinner.start();
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        
+        console.log(res.list);
+        let filtered = await filterList(res.list);
+        setData(filtered);
+        console.log("filtered?")
+        console.log(filtered);
+        
+      } catch (error) {
+        console.error(error);
+      } finally {
+        spinner.stop();
+      }
+};
+
+    useEffect(() => {
+        getListApi();
+        getNameApi();
+    },[]);
+
 
     const _handleMessagePress = item => {
-        navigation.navigate("Message", {name: item.name});
+        navigation.navigate("Message", {name: item.user.name, id: item.user.id, path: item.user.path, type: item.user.type, roomId: item.roomId, sender: userName});
     };
 
     return (
         <FlatList 
             horizontal={false}
-            keyExtractor={item => item['id'].toString()}
+            keyExtractor={item => item.user['id'].toString()}
             data={data}
             renderItem={({item}) => (
-                <Alert key={item['id'].toString()} item={item} 
+                <Alert key={item.user['id'].toString()} item={item} 
                     onPress = {() => _handleMessagePress(item)}
                 />
 

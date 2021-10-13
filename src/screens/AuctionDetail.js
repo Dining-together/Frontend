@@ -149,7 +149,7 @@ const AuctionDetail = ({ navigation, route}) => {
     const AuctionId = route.params.id;
     const {token, mode, id}  = useContext(LoginContext);
     const {spinner}  = useContext(ProgressContext);
-    const {aurl, url}  = useContext(UrlContext);
+    const {aurl, url, curl}  = useContext(UrlContext);
     const [title, setTitle] = useState("");
     const [userName, setUserName] = useState("");
     const [userType, setUserType] = useState("");
@@ -167,17 +167,105 @@ const AuctionDetail = ({ navigation, route}) => {
     const [bidstoreList, setBidstoreList] = useState([]);
     const [auctioneerId, setAuctioneerId] = useState(null);
     const [isMine, setIsMine] = useState(false);
+    const [userId, setUserId] = useState("");
+    const [userPath, setUserPath] = useState("");
+    var auction_name = '';
+    var auction_path = '';
+    var user_id ='';
 
     const [data, setData] = useState([]);
     const [isLoading, setISLoading] = useState(false);
 
-    const _onMessagePress = () => { navigation.navigate("Message" , {name: "닉네임"+AuctionId}) };
+
+    const check_customer = async(list) => {
+        let s = true;
+        for(let i = 0; i < list.length; i++){
+          let si = list[i].customer.id;
+          if (si === userId){
+            s = false
+            var roomId = list[i].id;
+            var sender = list[i].store.name;
+          }
+        }
+        var info = {
+            result: s,
+            roomId: roomId,
+            sender: sender
+        };
+
+        return info; 
+      }
+
+      const CreateChatRoom = async() => {
+        let fixedUrl = curl+"/chat/room";
+
+        let options = {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+            body: JSON.stringify({ 
+              id: user_id,
+              name: auction_name,
+              path: auction_path,
+              type: "CUSTOMER",
+          }),
+        };
+
+        try{
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            let roomId = res.data.id;
+            let sender = res.data.store.name;
+            navigation.navigate("Message", {id: id, name: auction_name, path: auction_path, type: "CUSTOMER", roomId: roomId, sender: sender});
+        } catch (error) {
+            console.error(error); 
+          } finally {
+            spinner.stop();
+          }
+      };
+
+    // 채팅방 존재 여부 확인
+    const CheckChatApi = async () => {
+        let fixedUrl = curl+"/chat/user_room";
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+        };
+
+        try{
+            spinner.start()
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            var result = await check_customer(res.list);
+            if(result.result === false){
+                navigation.navigate("Message", {id: id, name: auction_name, path: auction_path, type: "CUSTOMER", roomId: result.roomId, sender: result.sender});
+            }else{
+                CreateChatRoom();
+            }
+
+        }catch (error) {
+        console.error(error);
+        } finally {
+            spinner.stop();
+        }
+    };
+
+    const _onMessagePress = () => {CheckChatApi();};
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: "",
             headerRight: () => (
-                (mode==="Store") ?(<MaterialCommunityIcons name="send" size={35} onPress={_onMessagePress}
+                (mode==="STORE") ?(<MaterialCommunityIcons name="send" size={35} onPress={_onMessagePress}
                     style={{ marginRight: 15, marginBottom: 3, marginTop: 3, opacity: 0.7 }} />) : null
             )
         });
@@ -201,6 +289,8 @@ const AuctionDetail = ({ navigation, route}) => {
             let res = await response.json();
             let data = res.data;
 
+            auction_name = data.userName;
+            auction_path = data.path;
             setTitle(data.title);
             setUserName(data.userName);
             setUserType(data.groupType);
@@ -215,6 +305,8 @@ const AuctionDetail = ({ navigation, route}) => {
             setAddr(data.addr);
             setFinished(data.status==="End");
             setBidstoreList(data.auctioneers);
+            setUserId(data.userId);
+            user_id = data.userId;
         }catch(error) {
             console.error(error);
         }finally {

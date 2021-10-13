@@ -128,6 +128,8 @@ export const _changeType = (type) => {
     let text;
 
     switch(type){
+        case "AllStore":
+            text = "ALL"; break;
         case "KrStore":
             text = "KOREAN"; break;
         case "ChStore":

@@ -1,14 +1,24 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {ThemeContext} from "styled-components/native";
 import { createStackNavigator } from '@react-navigation/stack';
 import RegisterAuction from "../screens/RegisterAuction";
 import Main from "../screens/Main";
 import AuctionDetailStack from "./AuctionDetailStack";
+import {StackActions} from "@react-navigation/native"
 
 const Stack = createStackNavigator();
 
-const RegisterAuctionStack = () => {
+const RegisterAuctionStack = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
+
+    useEffect(() => {
+        if(route.state!==undefined){
+            console.log(route.state)
+            if(route.state.index > 0) {
+                navigation.dispatch(StackActions.popToTop());
+            }
+        }
+    },[navigation]);
 
     return (
         <Stack.Navigator
