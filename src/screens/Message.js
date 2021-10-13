@@ -229,6 +229,11 @@ const _getMessage = async (id) => {
     wait(2000).then(() => setRefreshing(false));
   }, [])
 
+  useEffect(() => {
+    setRefreshing(true);
+    wait(1000).then(() => setRefreshing(false));
+  }, [messages])
+
 
   
   const filterData = (list) => {
