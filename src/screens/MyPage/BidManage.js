@@ -254,18 +254,18 @@ const BidManage = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
+            let list = [];
+            if((res.list!==[]) && (res.list !==undefined)){
+                list = res.list.map( item => item.auction );
+            }
 
-
-            let list = res['list'].map( item => item.auction );
-
-
-            if(res.list!==undefined) {
+           
             if(isUser){
-                setData(_setLatestList(_filterProceeding(res['list'])));
+                setData(_setLatestList(_filterProceeding(list)));
             } else {
                 setData(_setLatestList(_filterProceeding(list)));
             }
-        }
+        
 
             return res["success"];
 

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { ThemeContext } from "styled-components/native";
 import { createStackNavigator } from '@react-navigation/stack';
 import { Mypage_Store, Mypage_User, StoreInfo, StoreInfoChange, UserInfo, UserInfoChange, StoreManage, ReviewManage
@@ -9,14 +9,24 @@ import AuctionDetailStack from "./AuctionDetailStack";
 import {LoginContext} from "../contexts";
 import LogManageTab from './LogManageTab';
 import AucLogManageTab from './AucLogManageTab';
-
+import {StackActions} from "@react-navigation/native";
 
 const Stack = createStackNavigator();
 
-const MypageStack = () => {
+const MypageStack = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
     const {mode} = useContext(LoginContext);
     const [isUser, setIsUset] = useState(false);
+
+    useEffect(() => {
+        if(route.state!==undefined){
+            console.log(route.state)
+            if(route.state.index > 0) {
+                navigation.dispatch(StackActions.popToTop());
+            }
+        }
+    },[navigation]);
+
     return (
         <Stack.Navigator
             initialRouteName={mode==="STORE" ? "Mypage_Store" : "Mypage_User"}

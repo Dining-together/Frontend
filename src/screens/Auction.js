@@ -11,6 +11,9 @@ import {selectsigungoo, setRegionList} from "../utils/regionData";
 
 const WIDTH = Dimensions.get("screen").width; 
 
+var moment = require('moment-timezone');
+moment.tz.setDefault("Asia/Seoul");
+exports.moment = moment;
 
 
 const AuctionsContainer = styled.View`
@@ -169,8 +172,25 @@ const Auction = ({navigation}) => {
 
     const _handleDeadline = (date) => {
         if(date!==null){
-        return date.slice(2,4)+date.slice(5,7)+date.slice(8,10)+date.slice(11,13)+date.slice(14,16)+" 마감";
+            var year = date.slice(0,4)
+            var month = date.slice(5,7)
+            var day = date.slice(8,10)
+            var hour = date.slice(11,13)
+            var minute = date.slice(14,16)
+            var d = year+"-"+month+"-"+day+" "+hour+":"+minute;
+            var t = moment(d, "YYYY-MM-DD HH:mm").format()
+            var now = moment().format()
+            var dif = (moment(t).diff(now, "hours"))
+            if(dif >= 24){
+                dif = parseInt(dif / 24);
+                var result = "약 "+String(dif)+"일 전"
+            }else{
+                var result = "약 "+String(dif)+"시간 전"
+            }
+        // return date.slice(2,4)+date.slice(5,7)+date.slice(8,10)+date.slice(11,13)+date.slice(14,16)+" 마감";
+        return result
     }};
+
 
     const _deleteStar = async (id) => {
         var fixedUrl = url+"/member/favorites";

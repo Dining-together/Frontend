@@ -9,6 +9,9 @@ const LoginContext = createContext({
     token: null,
     autoLogin: false,
     id : null,
+    stores: null,
+    latitude: null,
+    longitude: null,
     setSuccess: () => {},
     setAllow: () => {},
     setMode: () => {},
@@ -16,6 +19,9 @@ const LoginContext = createContext({
     setToken: () => {},
     setAutoLogin: () => {},
     setId: () => {},
+    setStores: () => {},
+    setLongitude: () => {},
+    setLatitude: () => {}
 });
 
 const LoginProvider = ({children}) => {
@@ -26,6 +32,9 @@ const LoginProvider = ({children}) => {
     const [token, setToken] = useState(null);
     const [autoLogin, setAutoLogin] = useState(false);
     const [id, setId] = useState(null);
+    const [stores, setStores] = useState(null);
+    const [latitude, setLatitude] = useState(null);
+    const [longitude, setLongitude] = useState(null);
 
     const value = {
         success, //로그인 성공 여부
@@ -42,9 +51,15 @@ const LoginProvider = ({children}) => {
         setAutoLogin,
         id,
         setId,
+        stores,
+        setStores,
+        latitude, 
+        setLatitude,
+        longitude,
+        setLongitude
     };
 
-    const setData = (token, autoLogin, allow, mode, doc, id) => {
+    const setData = (token, autoLogin, allow, mode, doc, id, longitude, latitude) => {
         let data = {
             token: token,
             autoLogin: autoLogin,
@@ -52,12 +67,14 @@ const LoginProvider = ({children}) => {
             mode: mode,
             doc: doc,
             id: id,
+            longitude: longitude,
+            latitude: latitude,
         };
     };
 
     useEffect(() => {
-        setData(token, autoLogin, allow, mode, doc, id);
-    },[token, autoLogin, allow, mode, doc, id]);
+        setData(token, autoLogin, allow, mode, doc, id, longitude, latitude);
+    },[token, autoLogin, allow, mode, doc, id, longitude, latitude]);
 
     useEffect(()=> {
         console.log("itss id")

@@ -178,8 +178,11 @@ const BidManageFinished = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-    
-            let list = res['list'].map( item => item.auctionId );
+            let list = [];
+            if((res.list!==[])&&(res.list!==undefined)){
+                list = res.list.map( item => item.auctionId );
+            }
+            
             setSuccessList(list);
 
             return res["success"];
