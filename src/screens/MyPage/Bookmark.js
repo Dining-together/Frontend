@@ -53,11 +53,11 @@ const DescText = styled.Text`
     color: ${({theme})=> theme.text};
 `;
 
-const Item = ({item: {id, src, name, menu, type, location}, onPress, onStarPress, isUser}) => {
+const Item = ({item: {id, photo, name, menu, type, location}, onPress, onStarPress, isUser}) => {
     return (
         <AlertContainer onPress={onPress}>
             <ImageContainer>
-                <StyledImage source={{ uri: src }} rounded={false} />
+                <StyledImage source={{ uri: photo }} rounded={false} />
             </ImageContainer>
             <TextContainer>
                 <TitleContainer>
@@ -115,8 +115,6 @@ const Bookmark = ({navigation, route}) => {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
 
-           
-
             setData(res.list);
 
             return res["success"];
@@ -159,7 +157,6 @@ const Bookmark = ({navigation, route}) => {
             newadd.push(store);
 
             setStores(newadd);
-
             
             return res["success"];
 

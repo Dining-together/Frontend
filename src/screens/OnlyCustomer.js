@@ -13,6 +13,7 @@ const Text = styled.Text`
     font-size: 30px;
 `;
 
+
 const OnlyCustomer = () => {
 
     useEffect(() => {

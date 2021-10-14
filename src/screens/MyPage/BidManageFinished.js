@@ -111,7 +111,7 @@ const Item = ({item: {auctionId, title, storeType, groupType,  groupCnt, addr, m
 
 const BidManageFinished = ({navigation, route}) => {
 
-    const {aurl} = useContext(UrlContext);
+    const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const {token,  id} = useContext(LoginContext);
 
@@ -124,7 +124,7 @@ const BidManageFinished = ({navigation, route}) => {
     // 마감된 공고 불러오기
     const getApi = async () => {
 
-        let fixedUrl = (isUser ? aurl+"/auction/"+`${id}`+"/auctions" : aurl+"/auction/"+`${id}`+"/auction");
+        let fixedUrl = (isUser ? url+"/auction/"+`${id}`+"/auctions" : url+"/auction/"+`${id}`+"/auction");
         let options = {
             method: 'GET',
             headers: {

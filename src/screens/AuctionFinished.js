@@ -86,7 +86,7 @@ const Item = React.memo(({item: {auctionId, auctioneers, content, createdDate, d
 });
 
 
-const Auction = ({navigation}) => {
+const AuctionFinished = ({navigation}) => {
     const theme = useContext(ThemeContext);
     const {token} = useContext(LoginContext);
     const {aurl} = useContext(UrlContext);
@@ -359,4 +359,4 @@ const Auction = ({navigation}) => {
     );
 };
 
-export default Auction; 
+export default AuctionFinished; 

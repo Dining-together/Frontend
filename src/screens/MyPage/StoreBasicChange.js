@@ -356,7 +356,10 @@ const StoreBasicChange = ({ navigation, route }) => {
         try {
             let response = await fetch(url,options);
             let res = await response.json();
+            console.log(res);
+
             return res["success"];
+
 
           } catch (error) {
             console.error(error);
@@ -387,7 +390,8 @@ const StoreBasicChange = ({ navigation, route }) => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-    
+            console.log(res);
+
             return res["success"];
             
             } catch (error) {

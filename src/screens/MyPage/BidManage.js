@@ -103,7 +103,7 @@ const Item = ({item: {auctionId, title, storeType, groupType, groupCnt, deadline
 
 const BidManage = ({navigation, route}) => {
 
-    const {aurl} = useContext(UrlContext);
+    const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
     const {token,  id} = useContext(LoginContext);
 
@@ -174,7 +174,7 @@ const BidManage = ({navigation, route}) => {
         try{
             spinner.start();
 
-            const result = await deleteApi(aurl+"/auction/"+`${id}`);
+            const result = await deleteApi(url+"/auction/"+`${id}`);
 
             if(!result){
                 alert("다시 공고를 삭제해주세요.");

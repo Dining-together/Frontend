@@ -36,7 +36,6 @@ const AucLogManage = ({route}) => {
         spinner.start();
         let response = await fetch(fixedUrl, options);
         let res = await response.json();
-
         setData(res.data);
 
         return res["success"];
