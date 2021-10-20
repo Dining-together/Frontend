@@ -39,7 +39,7 @@
       },
       "package": "com.DiningTogether.DiningTogether",
       "versionCode": 1,
-      "permissions": ["CAMERA", "ACCESS_BACKGROUND_LOCATION", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+      "permissions": ["RECEIVE_BOOT_COMPLETED", "CAMERA", "ACCESS_BACKGROUND_LOCATION", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE","ACCESS_FINE_LOCATION"]
     },
     "web": {
       "favicon": "./assets/favicon.png"

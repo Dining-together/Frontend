@@ -30,7 +30,7 @@ const Header = styled.View`
 `;
 
 const Title = styled.Text`
-    font-size: 30px;
+    font-size: ${({ len }) => len>13? 25 : 30}px;
     font-weight: bold;
     color: ${({ theme }) => theme.text};
     align-self: flex-start;
@@ -122,7 +122,8 @@ const AucLineCon = styled.View`
     `;
 
 const Store = styled.TouchableOpacity`
-    width: ${({double}) => double? WIDTH*0.35 : WIDTH*0.2};
+    width: ${({double}) => double? WIDTH*0.28 : WIDTH*0.2};
+    margin-left: ${({double}) => double? 0 : 10};
     justify-content: center;
 `;
 
@@ -567,7 +568,7 @@ const AuctionDetail = ({ navigation, route}) => {
                 <Header>
                     <View style={styles.name}>
                         <TitleBox>
-                        <Title>{title}</Title>
+                        <Title len = {title.length}>{title}</Title>
                         {(mode === 'STORE' && status!=="END") &&
                         <>
                         {isStar ?

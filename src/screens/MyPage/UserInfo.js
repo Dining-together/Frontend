@@ -1,11 +1,13 @@
 import React, {useState, useContext, useEffect} from 'react';
 import styled from "styled-components/native";
-import {StyleSheet, Text, View, Alert} from "react-native";
-import {ProfileImage, InfoText,ToggleButton, RadioButton} from '../../components';
+import {StyleSheet, Text, View, Alert, Modal, TouchableOpacity} from "react-native";
+import {ProfileImage, InfoText,ToggleButton, RadioButton, SmallButton} from '../../components';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import {UrlContext, LoginContext, ProgressContext} from "../../contexts";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { removeWhitespace } from "../../utils/common";
+
 
 const Container = styled.View`
     flex: 1;
@@ -37,12 +39,6 @@ const SettingContainer = styled.View`
     margin-top: 10px;
 `;
 
-const RowContainer = styled.View`
-    flex: 1;
-    flex-direction: row;
-    align-items: flex-start;
-    margin-bottom: 5px;
-`;
 
 const RadioTitle = styled.Text`
     font-size: 18px;
@@ -57,6 +53,35 @@ const AdditionalContainer = styled.View`
     flex-direction: row;
     align-items: flex-start;
     margin-top: 6px;
+`;
+
+const RowContainer = styled.View`
+    flex: 1;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 5px;
+`;
+
+const StyledTextInput = styled.TextInput.attrs(({ theme }) => ({
+    placeholderTextColor: theme.inputPlaceholder,
+}))`
+      width: ${({ width }) => width ? width : 80}%;
+      background-color: ${({ theme }) => theme.background};
+      color: ${({ theme }) => theme.text};
+      padding: 10px 15px;
+      font-size: 16px;
+      border: 1px solid ${({ theme }) => theme.inputBorder};
+      border-radius: 4px;
+      margin-top: 10px;
+  `;
+
+const PwContainer = styled.View`
+    background-color: ${({ theme }) => theme.background}; 
+    flex-direction: row;
+    margin : 40% 10px 0 10px;
+    border-radius: 10px;
+    border: 1px solid black;
+    padding: 15px;
 `;
 
 const  UesrInfo = ({navigation}) => {
@@ -76,10 +101,16 @@ const  UesrInfo = ({navigation}) => {
     const [longi, setLongi] = useState();
     const [isNoticed, setIsNoticed] = useState(false);
 
+    // 비밀번호 팝업창
+    const [isDialog, setIsDialog] = useState(false);
+    const [pw, setPw] = useState('');
+    
+    // 메뉴추가/수정 팝업창
+    const [isPwModal, setIsPwModal] = useState(false);
+    
+
      // 서버 get 처리 (정보 가져오기)
      const getApi = async (url) => {
-
-      
 
         let options = {
             method: 'GET',
@@ -203,18 +234,84 @@ const  UesrInfo = ({navigation}) => {
 
     }
 
+    // 비밀번호 확인
+    const postApi = async () => {
+        let pwpw = removeWhitespace(pw)
+        pwpw = encodeURIComponent(pwpw)
+        let fixedUrl = url+"/member/password/verification?password="+pwpw;
+        let options = {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+        };
+
+        try{
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+
+            console.log(res);
+
+            return res["success"];
+        }catch (error) {
+            console.error(error);
+          }
+        
+    };
+    // 메뉴 등록 버튼 눌렀을때
+    const _onPwPress = async() => {
+        try{
+            spinner.start();
+
+            const result = await postApi();
+
+            if(result){
+                navigation.navigate("UserInfoChange",
+                    { photo: photo, userName: userName, email: email, age: age, gender: gender,
+                        addr: addr, lati: lati, longi: longi,
+                    });
+                setPw('');
+                setIsPwModal(false);
+            }
+            else{
+                alert("비밀번호를 다시 입력해주세요");
+            }
+    
+        }catch(e){
+                console.log("Error", e.message);
+        }finally{
+            spinner.stop();
+        }
+    }
+
     return (
         <Container>
             <KeyboardAwareScrollView
                 extraScrollHeight={20}>
+
             <InfoChangeButton 
-                    onPress={() =>{navigation.navigate("UserInfoChange",
-                    { photo: photo, userName: userName, email: email, age: age, gender: gender,
-                        addr: addr, lati: lati, longi: longi,
-                    });
-                }}>
-                    <InfoChangeText>내 정보 수정하기</InfoChangeText>
-                </InfoChangeButton>
+                onPress={() =>{setIsPwModal(true);}}>
+                <InfoChangeText>내 정보 수정하기</InfoChangeText>
+            </InfoChangeButton>
+            <Modal visible={isPwModal} transparent={true}>
+                <TouchableOpacity style={styles.background} onPress={() => {setIsPwModal(false); setPw('');}} />
+                    <PwContainer>
+                        <StyledTextInput
+                            width={80}
+                            value={pw}
+                            placeholder="비밀번호"
+                            secureTextEntry={true}
+                            returnKeyType= "done"
+                            onChangeText={text => setPw(text)}
+                        />
+                        <SmallButton title="확인" containerStyle={{width: '20%', marginLeft:10, height: 50, marginTop: 10}}
+                            onPress={_onPwPress}
+                        />
+                        </PwContainer>
+                    </Modal>
+
 
                 <ProfileImage url={photo}/>
 
@@ -290,6 +387,15 @@ const styles = StyleSheet.create({
         marginLeft: 6, 
         marginTop: 2,
     },
+    background: {
+        position: 'absolute',
+        height: '100%',
+        width: '100%',
+        backgroundColor: 'rgba(0,0,0,0.5)'
+      },
+      row: {
+        flexDirection:'row',
+      }
 });
 
 export default UesrInfo; 

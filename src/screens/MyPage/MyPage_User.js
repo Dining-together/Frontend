@@ -169,10 +169,6 @@ const Mypage_User = ( {navigation} ) => {
                 }}  />
             </IconContainer>
             <IconContainer>
-                <MypageButton title='결제관리' name='payment'   
-                    onPress={() => {
-                        navigation.navigate("PayManage");
-                }} /> 
                 <MypageButton title='채팅관리' name='chat'  
                     onPress={() => {
                         navigation.navigate("ChatManage");
@@ -181,6 +177,8 @@ const Mypage_User = ( {navigation} ) => {
                     onPress={() => {
                         navigation.navigate("Bookmark",{ isUser: true });
                 }}/>
+                <MypageButton title='' name='star' white={true}/>
+                
             </IconContainer>
         </Container>
     );

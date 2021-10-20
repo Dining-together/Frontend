@@ -123,14 +123,15 @@ const StoresConteinter = styled.View`
 `;
 
 const StoreMap = ({navigation, route}) => {
-    const longi = route.params.longi;
-    const lati = route.params.lati;
     const mapRef = useRef();
     
     const theme = useContext(ThemeContext);
-    const {token, mode, stores} = useContext(LoginContext);
+    const {token, mode, stores, latitude, longitude} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
+
+    const longi = longitude;
+    const lati = latitude;
 
     const [storeListData, setStoreListData] = useState([]);
     const [storeList, setStoreList] = useState([]);

@@ -256,8 +256,9 @@ const BidManage = ({navigation, route}) => {
             let res = await response.json();
             let list = [];
             if((res.list!==[]) && (res.list !==undefined)){
-                list = res.list.map( item => item.auction );
+                list = res.list;
             }
+            
 
            
             if(isUser){

@@ -60,7 +60,7 @@ const StyledTextInput = styled.TextInput.attrs(({ theme }) => ({
   `;
 
 const PopularView = styled.View`
-  flex: 2;
+  flex: 3;
   margin: 10px 0px;
 `;
 
@@ -74,6 +74,15 @@ const Desc = styled.Text`
   font-weight: bold;
   color: ${({ theme }) => theme.text};
   margin-right:  ${({ marginRight }) => marginRight ? marginRight : 0}px;
+  margin-left:  ${({ marginLeft }) => marginLeft ? marginLeft : 0}px;
+`;
+
+const PopularDesc = styled.Text`
+  font-size: ${({ len }) => len>14 ? 14 : 18}px;
+  font-weight: bold;
+  color: ${({ theme }) => theme.text};
+  padding-right: 10px;
+  padding-left: 10px;
 `;
 
 const StyledImage = styled.Image`
@@ -155,7 +164,7 @@ const Item = React.memo(({ item: {auctionId, auctioneers, content, createdDate, 
                     <LatestTime notTime>{minPrice}원 ~ {maxPrice}원</LatestTime>
                 </RowDescContainer>
                 <LatsetTimeContainer>
-                    <LatestTime>{changeCreatedDateData(createdDate)} 전</LatestTime>
+                    
                 </LatsetTimeContainer>
             </RowItemContainer>
         )
@@ -165,7 +174,7 @@ const Item = React.memo(({ item: {auctionId, auctioneers, content, createdDate, 
                         <StyledImage source={{ uri: path }} rounded={true} />
                     </ImageContainer>
                     <DescContainer>
-                        <Desc>{title}</Desc>
+                        <PopularDesc len={title.length}>{title}</PopularDesc>
                         <Desc size={14}>{groupType} {groupCnt}명</Desc>
                         <Desc size={14}>{(changeListData(storeType).length < 12)? changeListData(storeType) : changeListData(storeType).slice(0,10)+"..."}</Desc>
                     </DescContainer>

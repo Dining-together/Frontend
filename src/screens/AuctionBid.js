@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useState, useEffect, useRef, useContext } from 
 import styled from "styled-components/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 
 //비동기적으로 멘트 끝까지 모두 보내졌는지 다시 확인하기  
@@ -328,6 +329,11 @@ const AuctionBid = ({ navigation, route }) => {
     }
 
     return (
+        <KeyboardAwareScrollView
+        extraScrollHeight={20}
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+        >
         <Container>
             <Title>가게 이름</Title>
             <Label>추천 메뉴</Label>
@@ -382,6 +388,7 @@ const AuctionBid = ({ navigation, route }) => {
             />
             {uploaded && disabled && <ErrorText>{errorMessage}</ErrorText>}
         </Container>
+        </KeyboardAwareScrollView>
     );
 };
 

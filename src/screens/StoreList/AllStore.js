@@ -243,12 +243,13 @@ const Store = ({navigation, route}) => {
         );
     });
 
-    const _getLocPer = async () => {
+    const _getLocPer = async (callback) => {
         try{
             const {status} = await Location.requestForegroundPermissionsAsync();
             if(status === "granted"){
                 setAllow(true);
                 setAllowLoc(true);
+                callback();
             };
         }catch (e) {
             console.log(e);
@@ -320,11 +321,8 @@ const Store = ({navigation, route}) => {
 
     useEffect(()=> {
             if(!allowLoc){
-                _getLocPer();
+                _getLocPer(getLocation);
             }else {
-                if(latitude===null || longitude === null){
-                    getLocation();
-                }
                 if(stores===null){
                     handleStoresApi();
                 }else{
@@ -339,6 +337,15 @@ const Store = ({navigation, route}) => {
         });
         setScoreListData(res);
     };
+
+    const mapPress = () => {
+        if(allowLoc)
+        {
+            navigation.navigate("StoreMap", {longi: longitude, lati: latitude});
+        }else{
+            alert("위치 권한을 허용해주세요.");
+        }
+    }
 
     const reviewSort = () => {
         var res = storeListData.sort(function(a,b){
@@ -414,9 +421,7 @@ const Store = ({navigation, route}) => {
             }}>
             
             <MapButton 
-                onPress={()=> {
-                        navigation.navigate("StoreMap", {longi: longitude, lati: latitude});
-            }}>
+                onPress={mapPress}>
                 <MapText>지도로 보기</MapText>
             </MapButton>
             
