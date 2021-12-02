@@ -6,7 +6,7 @@ import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 import {validateEmail,removeWhitespace} from "../../utils/common";
 import {images} from "../../images";
 import {UrlContext, ProgressContext, LoginConsumer, LoginContext} from "../../contexts";
-import {Alert} from "react-native";
+import {Alert, ScrollView} from "react-native";
 import * as Location from "expo-location";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -84,8 +84,6 @@ const SocialBackground = styled.TouchableOpacity`
 `;
 
 const ButtonText = styled.Text`
-    height: 30px;
-    line-height: 30px;
     font-size: 16px;
     font-weight: bold;
     color: ${({theme, isKakao}) => isKakao? theme.kakaoTextColor : theme.buttonTextColor};
@@ -95,7 +93,7 @@ const ButtonText = styled.Text`
 const Login = ({navigation}) => {
     const {spinner} = useContext(ProgressContext);
     const {url} = useContext(UrlContext);
-    const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setDoc, setId} = useContext(LoginContext);
+    const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setDoc, setId, setLatitude, setLongitude} = useContext(LoginContext);
     const [userId, setUserId] = useState("");
     const [password, setPassword] = useState("");
     const [disabled, setDisabled] = useState(true);
@@ -137,7 +135,7 @@ const Login = ({navigation}) => {
         }
     };
 
-    const getModeApi = async () => {
+    const getModeApi = async (callback) => {
         let fixedUrl = url+"/member/userId";
 
         let options = {
@@ -154,6 +152,14 @@ const Login = ({navigation}) => {
             let res = await response.json();
             setMode(res["type"]);
             setId(res["id"]);
+            if(res["type"] === "STORE") {
+                await callback(res["type"]);
+            }
+            console.log("alloapi 이전");
+            await getAllowApi()
+            .then(() => {
+                console.log("드디어?")
+                setSuccess(true)});
             return res["type"];
         }catch(error) {
             console.error(error);
@@ -196,23 +202,21 @@ const Login = ({navigation}) => {
     };
 
     const getAllowApi = async () => {
+        console.log("alloapi 시작");
         const {status} = await Location.requestBackgroundPermissionsAsync();
         if (status === "granted"){ 
             setAllow(true);
+            let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
+            setLatitude(location.coords.latitude);
+            setLongitude(location.coords.longitude);
+            alert("lati"+location.coords.latitude);
+            console.log(location.coords);
         }else{
             setAllow(false);
         }
+        console.log("alloapi 마침");
     }
 
-    const _loginSuccess = async (callback1, callback2, callback3) => {
-        var m = await callback1();
-        if(m === "STORE"){
-            const d = await callback2();
-        }
-        if(!allow){
-            await callback3();
-        }
-    };
 
     const _handleLoginPress = async () => {
         try{
@@ -221,8 +225,8 @@ const Login = ({navigation}) => {
             if (!result) {
                 alert("로그인 실패! 다시 입력해주세요.");
             }else {
-                await _loginSuccess(getModeApi,getDocApi,getAllowApi);
-                setSuccess(true);
+                console.log("로그인 계정 맞춤");
+                await getModeApi(getDocApi);
             }
     }catch(e){
         Alert.alert("Login Error", e.message);
@@ -236,6 +240,7 @@ const Login = ({navigation}) => {
         contentContainerStyle={{flex: 1}}
         extraScrollHeight={20}
         >
+        <ScrollView>
         <Container>
             <Title>로그인</Title>
             <Input 
@@ -286,19 +291,21 @@ const Login = ({navigation}) => {
             </Letter>
 
            
-           {/* <SocialContainer>
+           <SocialContainer>
                 <QText>SNS 계정 로그인</QText>
-            <SocialBackground color={theme.kakaoColor}>
+                <SocialBackground color={theme.kakaoColor} 
+                onPress={() => {navigation.navigate("KakaoLogin");}}>
                     <KakaoImage source={images.kakaoLogin} />
                     <ButtonText isKakao={true}>카카오 로그인</ButtonText>
                 </SocialBackground>
-                <SocialBackground color={theme.naverColor} hasMarginTop={true}>
+                <SocialBackground color={theme.naverColor} hasMarginTop={true}
+                onPress={() => {navigation.navigate("NaverLogin");}}>
                     <NaverImage source={images.naverLogin} />
                     <ButtonText>네이버 로그인</ButtonText>
                 </SocialBackground>
-            </SocialContainer> */}
+            </SocialContainer>
 
-            <SocialContainer style={{marginTop: 20}}>
+            <SocialContainer style={{marginTop: 20, marginBottom: 20}}>
                 <QText>아직 회원이 아니신가요?</QText>
                 <Button title="회원가입" containerStyle={{marginTop: 0}}
                 onPress={() => {
@@ -306,6 +313,7 @@ const Login = ({navigation}) => {
                 }}/>
             </SocialContainer>
         </Container>
+        </ScrollView>
         </KeyboardAwareScrollView>
     );
 };

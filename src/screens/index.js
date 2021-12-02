@@ -6,11 +6,6 @@ import Main from "./Main";
 import RegisterAuction from "./RegisterAuction";
 import Auction from "./Auction";
 import AllStore from "./StoreList/AllStore";
-import ChStore from "./StoreList/ChStore";
-import EtcStore from "./StoreList/EtcStore";
-import JpStore from "./StoreList/JpStore";
-import WsStore from "./StoreList/WsStore";
-import KrStore from "./StoreList/KrStore";
 import Mypage_Store from "./MyPage/Mypage_Store";
 import Mypage_User from "./MyPage/MyPage_User";
 import StoreInfo from "./MyPage/StoreInfo";
@@ -48,11 +43,12 @@ import AucLogManage from "./MyPage/AucLogManage";
 import BidLogManage from "./MyPage/BidLogManage";
 import LogManage from "./MyPage/LogManage";
 import ReviewLog from "./MyPage/ReviewLog";
-
+import KakaoLogin from './Account/KakaoLogin';
+import NaverLogin from "./Account/NaverLogin";
 export {
     AuctionDetail, AuctionBid, AuctionFinished, UserInfoChange, UserInfo, Mypage_User, Mypage_Store, Review, StoreInfoChange,
     SearchAuction, SearchStore, Message, Login, Mode, Notice, Signup, Main, AccountFind, RegisterAuction, Auction, StoreDetail, StoreInfo, StoreMap,
     ReviewManage, ChatManage, Bookmark, BidManage, BidManageFinished, PayManage, UseManage, OrderDetail, StoreManage, ReviewWrite, DocumentRegister,
-    MultipleImage,BidDetail,StoreBasicChange,StoreConvChange, OnlyCustomer,AllStore, KrStore, JpStore, EtcStore, WsStore, ChStore, AuctionBidDetail,
-    AucLogManage, BidLogManage, LogManage, ReviewLog
+    MultipleImage,BidDetail,StoreBasicChange,StoreConvChange, OnlyCustomer,AllStore, AuctionBidDetail,
+    AucLogManage, BidLogManage, LogManage, ReviewLog, KakaoLogin, NaverLogin
 };

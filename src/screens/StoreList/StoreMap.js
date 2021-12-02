@@ -123,14 +123,15 @@ const StoresConteinter = styled.View`
 `;
 
 const StoreMap = ({navigation, route}) => {
-    const longi = route.params.longi;
-    const lati = route.params.lati;
     const mapRef = useRef();
     
     const theme = useContext(ThemeContext);
-    const {token, mode, setAllow} = useContext(LoginContext);
+    const {token, mode, stores, latitude, longitude} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
     const {spinner} = useContext(ProgressContext);
+
+    const longi = longitude;
+    const lati = latitude;
 
     const [storeListData, setStoreListData] = useState([]);
     const [storeList, setStoreList] = useState([]);
@@ -232,32 +233,11 @@ const StoreMap = ({navigation, route}) => {
     };
 
     const handleApi = async () => {
-        let fixedUrl = url+"/member/stores";
-
-        let options = {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-AUTH-TOKEN' : token,
-            },
-        };
-
-        try {
-            spinner.start();
-            let response = await fetch(fixedUrl, options);
-            let res = await response.json();
-            let list = res["list"];
-            setStoreListData(list);
+            setStoreListData(stores);
             await getScope();
             if(mode!=="STORE"){
                 await handleStarApi();
             }
-        }catch(error) {
-            console.error(error);
-        }finally {
-            spinner.stop();
-        }
     }
 
     const checkScope = (lat, lon) => {

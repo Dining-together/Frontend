@@ -2,12 +2,14 @@ import React, { useState, useEffect, useContext } from 'react';
 import styled from "styled-components/native";
 import { IconButton } from "../components";
 import { images } from '../images';
-import { FlatList, ScrollView, Dimensions } from "react-native";
+import { FlatList, ScrollView, Dimensions, Alert } from "react-native";
 import { popular, recomendedStore, StoreList } from "../utils/data";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ThemeContext } from "styled-components";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 import {_sortLatest, cutDateData, changeListData, createdDate, changeCreatedDateData, removeWhitespace, _sortPopular} from "../utils/common";
+import * as Location from "expo-location";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
@@ -59,7 +61,7 @@ const StyledTextInput = styled.TextInput.attrs(({ theme }) => ({
   `;
 
 const PopularView = styled.View`
-  flex: 2;
+  flex: 3;
   margin: 10px 0px;
 `;
 
@@ -73,6 +75,15 @@ const Desc = styled.Text`
   font-weight: bold;
   color: ${({ theme }) => theme.text};
   margin-right:  ${({ marginRight }) => marginRight ? marginRight : 0}px;
+  margin-left:  ${({ marginLeft }) => marginLeft ? marginLeft : 0}px;
+`;
+
+const PopularDesc = styled.Text`
+  font-size: ${({ len }) => len>14 ? 14 : 18}px;
+  font-weight: bold;
+  color: ${({ theme }) => theme.text};
+  padding-right: 10px;
+  padding-left: 10px;
 `;
 
 const StyledImage = styled.Image`
@@ -154,7 +165,7 @@ const Item = React.memo(({ item: {auctionId, auctioneers, content, createdDate, 
                     <LatestTime notTime>{minPrice}원 ~ {maxPrice}원</LatestTime>
                 </RowDescContainer>
                 <LatsetTimeContainer>
-                    <LatestTime>{changeCreatedDateData(createdDate)} 전</LatestTime>
+                    
                 </LatsetTimeContainer>
             </RowItemContainer>
         )
@@ -164,7 +175,7 @@ const Item = React.memo(({ item: {auctionId, auctioneers, content, createdDate, 
                         <StyledImage source={{ uri: path }} rounded={true} />
                     </ImageContainer>
                     <DescContainer>
-                        <Desc>{title}</Desc>
+                        <PopularDesc len={title.length}>{title}</PopularDesc>
                         <Desc size={14}>{groupType} {groupCnt}명</Desc>
                         <Desc size={14}>{(changeListData(storeType).length < 12)? changeListData(storeType) : changeListData(storeType).slice(0,10)+"..."}</Desc>
                     </DescContainer>
@@ -196,7 +207,7 @@ const Store = ({ item: { id, storeName, score, reviews, foodType, path }, onPres
 const Main = ({ navigation }) => {
     const theme = useContext(ThemeContext);
     const { aurl, url} = useContext(UrlContext);
-    const {allow, autoLogin, doc, mode, token} = useContext(LoginContext);
+    const {allow, autoLogin, doc, mode, token, latitude, longitude, setLatitude, setLongitude, setAllow, infoSetting, setInfoSetting} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
 
     const [input, setInput] = useState("");
@@ -205,6 +216,7 @@ const Main = ({ navigation }) => {
     const [latestAuctions, setLatestAuctions] = useState("first");
     const [popularAuctions, setPopularAuctions] = useState("first");
     const [isLoading, setIsLoading] = useState(true);
+    const [allowLoc, setAllowLoc] = useState(allow);
 
     const _handleNoticePress = () => { navigation.navigate("Notice") };
 
@@ -220,6 +232,18 @@ const Main = ({ navigation }) => {
     const _handleStorePress = item => {
         navigation.navigate('StoreDetail', { id: item.id, name: item.storeName })
     };
+
+    const _getLocPer = async () => {
+        try{
+            const {status} = await Location.requestForegroundPermissionsAsync();
+            if(status === "granted"){
+                setAllow(true);
+                setAllowLoc(true);
+            };
+        }catch (e) {
+            console.log(e);
+        };
+      };
 
     const handleAuctionApi = async () => {
         let fixedUrl = aurl+"/auction/auctions";
@@ -250,10 +274,88 @@ const Main = ({ navigation }) => {
         }
     };
 
-    useEffect(()=> {
+       //현위치 
+       const getLocation = async () => {
+        try{
+            spinner.start()
+            let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
+            setLatitude(location.coords.latitude);
+            setLongitude(location.coords.longitude);
+        }catch(e){
+            console.error(e);
+        }finally{
+            spinner.stop();
+        }
+};
+
+const _checkInfoSetting = async () => {
+    let fixedUrl = url+"/member/customer";
+
+    let options = {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-AUTH-TOKEN' : token,
+        },
+    };
+
+    try {
+        spinner.start();
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        if((res.data.gender===null)||(res.data.addr===null)){
+            return false
+        }else{
+            return true
+        }
+    }catch(error) {
+        console.error(error);
+    }finally {
+        spinner.stop();
+    }
+};
+
+    const SettingAlert = async () => {
+        let isSetting = await _checkInfoSetting();
+            if(isSetting===true){
+                setInfoSetting(true)
+            }else{
+                Alert.alert("알림","회원 정보를 업데이트 해주세요.");
+            }
+    }
+
+    // getAllKeys = async () => {
+    //     let keys = []
+    //     try {
+    //       keys = await AsyncStorage.getAllKeys()
+    //     } catch(e) {
+    //       console.log(e)
+    //     }
+      
+    //     console.log(keys)
+        
+    //   }
+      
+
+    useEffect(()=>{
         handleAuctionApi();
-       
+        if(infoSetting===false){
+            SettingAlert();
+        }
+        // getAllKeys();
     },[]);
+
+    useEffect(()=> {
+        if(latitude===null || longitude===null){
+            if(!allowLoc){
+                _getLocPer();
+            }else{
+                getLocation();
+            }
+        }
+    },[allowLoc]);
+
 
 
     return (

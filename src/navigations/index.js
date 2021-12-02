@@ -25,7 +25,9 @@ const Navigation = () => {
                     setToken(result);
                     AsyncStorage.getItem("UserId", (err, res) => {
                         console.log(res);
-                        if(JSON.parse(res)==null) setId(JSON.parse(res).id);
+                        if(JSON.parse(res)!=null) {
+                            setId(JSON.parse(res).id)
+                        };
                     });
         
                     AsyncStorage.getItem("UserMode", (err, res) => {

@@ -4,8 +4,8 @@ import {Dimensions, View, ScrollView, Alert} from "react-native";
 import { ThemeContext } from "styled-components";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import {LoginContext, UrlContext} from "../../contexts";
-import {Spinner} from "../../components";
+import {LoginContext, UrlContext, ProgressContext} from "../../contexts";
+import {_changeType} from "../../utils/common";
 
 const HEIGHT = Dimensions.get("screen").width;
 
@@ -32,7 +32,7 @@ const AdditionalBox = styled.View`
 
 const ButtonBox = styled.TouchableOpacity`
     background-color: ${({theme, checked})=> checked? theme.titleColor :theme.storeButton};
-    width: ${({mode})=> mode==="STORE"? 45 :30}%;
+    width: 30%;
     align-items: center;
     justify-content: center;
     border-radius: 10px;
@@ -117,22 +117,19 @@ const MapText = styled.Text`
 
 const Store = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
-    const {allow, token, mode, setAllow} = useContext(LoginContext);
+    const {allow, token, mode, setAllow, latitude, longitude, stores, setStores, setLatitude, setLongitude} = useContext(LoginContext);
     const {url} = useContext(UrlContext);
+    const {spinner} = useContext(ProgressContext);
 
     const [sort,setSort] = useState(0);
-    const [loc, setLoc] = useState(null);
-    const [lati, setLati] = useState(null);
-    const [longi, setLongi] = useState(null);
-    const menu = route.name;
+    const menu = _changeType(route.name);
     const [storeListData, setStoreListData] = useState([]);
     const [distanceListData, setDistanceListData] = useState([]);
     const [reviewListData, setReviewListData] = useState([]);
     const [scoreListData, setScoreListData] = useState([]);
     const [allowLoc, setAllowLoc] = useState(allow);
-    const [isSetting, setIsSetting] = useState(true);
-    const [realLat, setRealLat] = useState("");
-    const [realLon, setRealLon] = useState("");
+    const [realLat, setRealLat] = useState(latitude);
+    const [realLon, setRealLon] = useState(longitude);
     const [favorites, setFavorites] = useState([]);
 
     const _deleteStar = async (id) => {
@@ -202,6 +199,7 @@ const Store = ({navigation, route}) => {
         };
         
         try {
+            spinner.start()
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
             if(res.list!==undefined){
@@ -209,10 +207,12 @@ const Store = ({navigation, route}) => {
             }
         }catch(error) {
             console.error(error);
+        }finally{
+            spinner.stop()
         }
     };
 
-    const Item = ({item: {id, name, storeImages, storeType, path, reviewAvg, comment, latitude, longitude}, onPress, theme}) => {
+    const Item = React.memo(({item: {id, name, storeImages, storeType, path, reviewAvg, comment, latitude, longitude}, onPress, theme}) => {
         const [isStar, setIsStar] = useState(favorites.includes(id)===true);
 
         return (
@@ -241,14 +241,15 @@ const Store = ({navigation, route}) => {
                 </ScoreBox>
             </ItemContainer>
         );
-    };
+    });
 
-    const _getLocPer = async () => {
+    const _getLocPer = async (callback) => {
         try{
             const {status} = await Location.requestForegroundPermissionsAsync();
             if(status === "granted"){
                 setAllow(true);
                 setAllowLoc(true);
+                callback();
             };
         }catch (e) {
             console.log(e);
@@ -258,41 +259,31 @@ const Store = ({navigation, route}) => {
     const filterData = (list) => {
         var response = list.filter(item => item.documentChecked===true);
         var res = response.filter(item => item.addr!==null);
+        if(menu!=="ALL") {
+            res = res.filter(item => item.storeType === menu);
+        }
         return res;
     };
 
-    const getlatlon = async () => {
-        let fixedUrl = url+"/member/customer";
 
-        let options = {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-AUTH-TOKEN' : token,
-            },
-        };
-        
-        try {
-            let response = await fetch(fixedUrl, options);
-            let res = await response.json();
-            var lat = res.data.latitude;
-            var lon = res.data.longitude;
-           setRealLat(lat);
-           setRealLon(lon);
-        }catch(error) {
-            console.error(error);
+    //현위치 
+    const getLocation = async () => {
+        try{
+            spinner.start()
+            let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
+            setLatitude(location.coords.latitude);
+            setLongitude(location.coords.longitude);
+            setRealLat(location.coords.latitude);
+            setRealLon(location.coords.longitude);
+        }catch(e){
+            console.error(e);
+        }finally{
+            spinner.stop();
         }
-    };
+};
 
-    useEffect(()=>{
-        if(mode !== "STORE"){
-            getlatlon();
-            handleStarApi();
-        }
-    },[]);
 
-    const handleApi = async () => {
+    const handleStoresApi = async () => {
         let fixedUrl = url+"/member/stores";
 
         let options = {
@@ -305,35 +296,40 @@ const Store = ({navigation, route}) => {
         };
 
         try {
+            spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
             let list = res["list"];
-            list = await filterData(list);
-            setStoreListData(list);
-            await getLocation();
+            console.log(list);
+            setStores(list);
+            var sList = filterData(list);
+            setStoreListData(sList);
         }catch(error) {
             console.error(error);
+        }finally{
+            spinner.stop()
         }
     };
 
-    useEffect(()=> {
-        if(!allowLoc){
-            _getLocPer();
-        }else {
-            handleApi();
+    useEffect(()=>{
+        if(mode !== "STORE"){
+            handleStarApi();
         }
-    },[allowLoc]);
+        console.log(latitude, longitude);
+    },[]);
+
 
     useEffect(()=> {
-        if(lati!==null && longi!==null){
-            if(mode==="CUSTOMER"&& realLat!=="" && realLon!==""){
-                setIsSetting(false);
+            if(!allowLoc){
+                _getLocPer(getLocation);
+            }else {
+                if(stores===null){
+                    handleStoresApi();
+                }else{
+                    setStoreListData(filterData(stores));
+                }
             }
-            if(mode==="STORE"){
-                setIsSetting(false);
-            }
-        }
-    },[lati, longi, realLat, realLon]);
+    },[allowLoc, menu]);
 
     const scoreSort = () => {
         var res = storeListData.sort(function(a,b){
@@ -341,6 +337,15 @@ const Store = ({navigation, route}) => {
         });
         setScoreListData(res);
     };
+
+    const mapPress = () => {
+        if(allowLoc)
+        {
+            navigation.navigate("StoreMap", {longi: longitude, lati: latitude});
+        }else{
+            alert("위치 권한을 허용해주세요.");
+        }
+    }
 
     const reviewSort = () => {
         var res = storeListData.sort(function(a,b){
@@ -377,40 +382,22 @@ const Store = ({navigation, route}) => {
             distanceSort();
         }else if(sort === 2){
             scoreSort();
-        }else{
+        }else if(sort === 3){
             reviewSort();
         }
-        const willFocusSubscription = navigation.addListener('focus', () => {
-            handleApi();
-        });
-        return willFocusSubscription;
     }, [sort]);
 
     const _onStorePress = item => {
         navigation.navigate('StoreDetailStack', { id: item.id});
     };
 
-    const getLocation = async () => {
-            try{
-                let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
-                setLoc(location);
-                setLati(location.coords.latitude);
-                setLongi(location.coords.longitude);
-            }catch(e){
-                console.error(e);
-            }
-            
-        return loc;
-    };
 
     return (
         <Container>
             <ButtonsContainer>
-                {mode!=="STORE" && (
                 <ButtonBox mode={mode} onPress={() => setSort(1)} checked={sort===1}>
                     <ButtonText>거리순</ButtonText>
                 </ButtonBox>
-                )}
                 <ButtonBox mode={mode} onPress={() => setSort(2)} checked={sort===2}>
                     <ButtonText>별점순</ButtonText>
                 </ButtonBox>
@@ -420,27 +407,24 @@ const Store = ({navigation, route}) => {
             </ButtonsContainer>
             <ScrollView>
             <StoresConteinter>
-                {(!isSetting&&sort===0) && storeListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)} theme={theme}/>))}
-                {(!isSetting&&sort===1) && distanceListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)}  theme={theme}/>))}
-                {(!isSetting&&sort===2) && scoreListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)} theme={theme}/>))}
-                {(!isSetting&&sort===3) && reviewListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)}   theme={theme}/>))}
+                {(sort===0) && storeListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)} theme={theme}/>))}
+                {(sort===1) && distanceListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)}  theme={theme}/>))}
+                {(sort===2) && scoreListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)} theme={theme}/>))}
+                {(sort===3) && reviewListData.map(item => (<Item item={item} key={item.id} onPress={()=> _onStorePress(item)}   theme={theme}/>))}
             </StoresConteinter>
             <AdditionalBox />
             </ScrollView>
-            {isSetting && <Spinner />}
             <View style={{
                 position: "absolute",
                 bottom: 10,
                 right: 5,
             }}>
-            {!isSetting && (
-                <MapButton 
-                onPress={()=> {
-                        navigation.navigate("StoreMap", {longi: longi, lati: lati});
-            }}>
+            
+            <MapButton 
+                onPress={mapPress}>
                 <MapText>지도로 보기</MapText>
             </MapButton>
-            )}
+            
             </View>
         </Container>
     );

@@ -53,11 +53,11 @@ const DescText = styled.Text`
     color: ${({theme})=> theme.text};
 `;
 
-const Item = ({item: {id, src, name, menu, type, location}, onPress, onStarPress, isUser}) => {
+const Item = ({item: {id, photo, name, menu, type, location}, onPress, onStarPress, isUser}) => {
     return (
         <AlertContainer onPress={onPress}>
             <ImageContainer>
-                <StyledImage source={{ uri: src }} rounded={false} />
+                <StyledImage source={{ uri: photo }} rounded={false} />
             </ImageContainer>
             <TextContainer>
                 <TitleContainer>
@@ -147,18 +147,28 @@ const Bookmark = ({navigation, route}) => {
             spinner.start();
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-
             
-            const store = {
+           if(res.data.storeImages[0]!==undefined){
+                var store = {
                 id: res.data.id,
                 name : res.data.name,
                 type : res.data.storeType,
                 location : res.data.addr,
+                photo: res.data.storeImages[0].path,
             }
+            }else{
+                var store = {
+                    id: res.data.id,
+                    name : res.data.name,
+                    type : res.data.storeType,
+                    location : res.data.addr,
+                    photo: null
+            }
+           } 
             newadd.push(store);
 
             setStores(newadd);
-
+            console.log(res.data)
             
             return res["success"];
 
@@ -187,13 +197,15 @@ const Bookmark = ({navigation, route}) => {
             let res = await response.json();
 
             const data = res.data;
-            
+            console.log("star!")
+            console.log(data)
             const auction = {
                 id : data.auctionId,
                 name : data.title,
                 menu : data.storeType,
                 type : data.groupType + " " + data.groupCnt + "명",
                 location : data.addr,
+                src: data.path,
             };
 
             newadd.push(auction);

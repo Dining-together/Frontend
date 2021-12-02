@@ -150,7 +150,7 @@ const StoreDetail = ({navigation, route}) => {
     const theme = useContext(ThemeContext);
     const {mode, token} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
-    const {url} = useContext(UrlContext);
+    const {url, curl} = useContext(UrlContext);
 
     const carouselRef = useRef();
     const [indexSelected, setIndexSelected] = useState(0);
@@ -300,9 +300,13 @@ const StoreDetail = ({navigation, route}) => {
     const [comment, setComment] = useState(null);
     const [reviewAvg, setReviewAvg] = useState(null);
     const [reviewCnt, setReviewCnt]= useState(null) ;
+    const [path, setPath] = useState(null);
     const [picData, setPicData] = useState([]);
     const [photos, setPhotos] = useState([{ment: "", name: "", path: ""}]);
     const [menuPics, setMenuPics] = useState([]);
+    var store_name = "";
+    var store_path = "";
+
     const _handleFacilities = () => {
         if(facilities===[]){
             return null;
@@ -336,6 +340,7 @@ const StoreDetail = ({navigation, route}) => {
             let res = await response.json();
             let menuResponse = await fetch(menuUrl, options);
             let menuRes = await menuResponse.json();
+            console.log(res.data);
             setStoreName(res.data.name);
             setStoreType(_changeType(res.data.storeType));
             setMenus(menuRes.list);
@@ -347,6 +352,9 @@ const StoreDetail = ({navigation, route}) => {
             setReviewAvg(res.data.reviewAvg);
             setReviewCnt(res.data.reviewCnt);
             setPicData(res.data.storeImages);
+            setPath(res.data.path);
+            store_name = res.data.name;
+            store_path = res.data.path;
             var uploaded = (res.data.facility===null);
             if(!uploaded){
                 setParking(res.data.facility.parking);
@@ -411,9 +419,94 @@ const StoreDetail = ({navigation, route}) => {
         }
     },[isLoading]);
 
+    const check_store = async(list) => {
+        let s = true;
+        for(let i = 0; i < list.length; i++){
+          let si = list[i].store.id;
+          if (si === id){
+            s = false
+            var roomId = list[i].id;
+            var sender = list[i].customer.name;
+          }
+        }
+        var info = {
+            result: s,
+            roomId: roomId,
+            sender: sender
+        };
+
+        return info; 
+      }
+
+      const CreateChatRoom = async() => {
+        let fixedUrl = curl+"/chat/room";
+
+        let options = {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+            body: JSON.stringify({ 
+              id: id,
+              name: store_name,
+              path: store_path,
+              type: "STORE",
+          }),
+        };
+
+        try{
+            spinner.start();
+            let response = await fetch(fixedUrl, options);
+            let res = await response.json();
+            let roomId = res.data.id;
+            let sender = res.data.customer.name;
+            navigation.navigate("Message", {id: id, name: store_name, path: store_path, type: "STORE", roomId: roomId, sender: sender});
+        } catch (error) {
+            console.error(error); 
+          } finally {
+            spinner.stop();
+          }
+      };
+
+    // 채팅방 존재 여부 확인
+    const CheckChatApi = async () => {
+        let fixedUrl = curl+"/chat/user_room";
+
+        let options = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-AUTH-TOKEN' : token,
+            },
+        };
+
+        try{
+            spinner.start()
+            let response = await fetch(fixedUrl, options);
+            console.log("yes");
+            let res = await response.json();
+            console.log("res");
+            var result = await check_store(res.list);
+            console.log("result");
+            if(result.result === false){
+                navigation.navigate("Message", {id: id, name: store_name, path: store_path, type: "STORE", roomId: result.roomId, sender: result.sender});
+            }else{
+                CreateChatRoom();
+            }
+
+        }catch (error) {
+        console.error(error);
+        } finally {
+            spinner.stop();
+        }
+    };
+
     const [isStar, setIsStar] = useState(false);
     
-    const _onMessagePress = () => {navigation.navigate("Message", {name: "가게 이름"+id})};
+    const _onMessagePress = () => {CheckChatApi();};
 
     const _onReviewPress = () => {navigation.navigate("Review",{id: id})};
 

@@ -9,6 +9,10 @@ const LoginContext = createContext({
     token: null,
     autoLogin: false,
     id : null,
+    stores: null,
+    latitude: null,
+    longitude: null,
+    infoSetting: false,
     setSuccess: () => {},
     setAllow: () => {},
     setMode: () => {},
@@ -16,6 +20,10 @@ const LoginContext = createContext({
     setToken: () => {},
     setAutoLogin: () => {},
     setId: () => {},
+    setStores: () => {},
+    setLongitude: () => {},
+    setLatitude: () => {},
+    setInfoSetting: () => {},
 });
 
 const LoginProvider = ({children}) => {
@@ -26,6 +34,10 @@ const LoginProvider = ({children}) => {
     const [token, setToken] = useState(null);
     const [autoLogin, setAutoLogin] = useState(false);
     const [id, setId] = useState(null);
+    const [stores, setStores] = useState(null);
+    const [latitude, setLatitude] = useState(null);
+    const [longitude, setLongitude] = useState(null);
+    const [infoSetting, setInfoSetting] = useState(false);
 
     const value = {
         success, //로그인 성공 여부
@@ -42,9 +54,17 @@ const LoginProvider = ({children}) => {
         setAutoLogin,
         id,
         setId,
+        stores,
+        setStores,
+        latitude, 
+        setLatitude,
+        longitude,
+        setLongitude,
+        infoSetting,
+        setInfoSetting,
     };
 
-    const setData = (token, autoLogin, allow, mode, doc, id) => {
+    const setData = (token, autoLogin, allow, mode, doc, id, longitude, latitude, infoSetting) => {
         let data = {
             token: token,
             autoLogin: autoLogin,
@@ -52,12 +72,15 @@ const LoginProvider = ({children}) => {
             mode: mode,
             doc: doc,
             id: id,
+            longitude: longitude,
+            latitude: latitude,
+            infoSetting: infoSetting,
         };
     };
 
     useEffect(() => {
-        setData(token, autoLogin, allow, mode, doc, id);
-    },[token, autoLogin, allow, mode, doc, id]);
+        setData(token, autoLogin, allow, mode, doc, id, longitude, latitude, infoSetting);
+    },[token, autoLogin, allow, mode, doc, id, longitude, latitude, infoSetting]);
 
     useEffect(()=> {
         console.log("itss id")
@@ -68,7 +91,6 @@ const LoginProvider = ({children}) => {
     },[id, autoLogin]);
 
     useEffect(()=> {
-        console.log("itss mode")
         if(autoLogin && mode!==null){
             var UMd = {mode : mode};
             AsyncStorage.mergeItem("UserMode", JSON.stringify(UMd));    
@@ -76,7 +98,6 @@ const LoginProvider = ({children}) => {
     },[mode ,autoLogin]);
 
     useEffect(()=>{
-        console.log("itss doc")
         if(autoLogin && mode ==="Store"){
             var UDc = {doc : doc};
             AsyncStorage.mergeItem("UserDoc", JSON.stringify(UDc));
@@ -84,7 +105,6 @@ const LoginProvider = ({children}) => {
     },[doc, autoLogin]);
 
     useEffect(()=>{
-        console.log("itss allow")
         if(autoLogin){
             var UAl = {allow: allow};
             AsyncStorage.mergeItem("UserAllow", JSON.stringify(UAl));

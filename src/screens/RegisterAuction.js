@@ -11,13 +11,14 @@ import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
 import * as Location from "expo-location";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 import {changeListData} from "../utils/common";
-import { set } from 'react-native-reanimated';
+
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
 
-require('moment-timezone');
-var moment = require('moment');
+
+
+var moment = require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
 exports.moment = moment;
 
@@ -170,8 +171,8 @@ background-color:  ${({ theme }) => theme.background};
 
 
 const RegisterAuction = ({navigation, route}) => {
-  const {allow, token, setAllow} = useContext(LoginContext);
-  const {url} = useContext(UrlContext);
+  const {allow, token, setAllow, longitude, latitude, setLatitude, setLongitude} = useContext(LoginContext);
+  const {url, aurl} = useContext(UrlContext);
   const {spinner} = useContext(ProgressContext);
   const [allowLoc, setAllowLoc] = useState(allow);
 
@@ -198,8 +199,6 @@ const RegisterAuction = ({navigation, route}) => {
     const didMountRef = useRef();
     const [foodType, setFoodType] = useState([]);
     let auctionId = route.params.id;
-    let endFullData = "";
-    let bookFullData = "";
 
 
     const [isChange, setIsChange] = useState(route.params.isChange);
@@ -247,18 +246,17 @@ const RegisterAuction = ({navigation, route}) => {
 
   //현재 위치
   const [loc, setLoc] = useState(null); //선택 지역 
-  const initialLati = 37.535887;
-  const initialLongi = 126.984063;
-  const [lati, setLati] = useState(37.535887);
-  const [longi, setLongi] = useState(126.984063);
+  const [lati, setLati] = useState(latitude);
+  const [longi, setLongi] = useState(longitude);
   const [region, setRegion] = useState({
     longitude: longi,
     latitude: lati,
-    latitudeDelta: 0.3,
-    longitudeDelta: 0.3,
+    latitudeDelta: 0.02,
+    longitudeDelta: 0.02,
 });
 const [selectedLocation, setSelectedLocation] = useState(null);
 
+// 위치 허용
 const _getLocPer = async () => {
   try{
       const {status} = await Location.requestForegroundPermissionsAsync();
@@ -277,10 +275,13 @@ const _getLocPer = async () => {
           let location = await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.High}); 
           setLati(location.coords.latitude);
           setLongi(location.coords.longitude);
+          setLatitude(location.coords.latitude);
+          setLongitude(location.coords.longitude);
         }
       return loc;
   };
 
+  //위치 -> 시도 변경
   const convertKoreanLocation = async(res) => {
     let result = "";
     if (res.localityInfo.administrative.length >= 4){
@@ -321,22 +322,25 @@ const _getLocPer = async () => {
   };
 
   useEffect(() => {
-    if(!allowLoc){
-      _getLocPer();
-    }else {
-      const result = getLocation();
+    if(longitude===null || latitude === null){
+      if(!allowLoc){
+        _getLocPer();
+      }else{
+        getLocation();
+      }
     }
   }, [allowLoc]);
 
+  // 공고 생성 API
   const handleApi = async () => {
-    let fixedUrl = url+"/auction";
+    let fixedUrl = aurl+"/auction";
 
     let Info = {
       content: additionalContent,
-      deadline: endFullData,
+      deadline: realEnd,
       maxPrice: maxPrice,
       minPrice: minPrice,
-      reservation: bookFullData,
+      reservation: realEnd,
       storeType: JSON.stringify(foodType),
       title: title,
       groupType: meetingType,
@@ -357,6 +361,7 @@ const _getLocPer = async () => {
   };
 
   try{
+      spinner.start();
       let response = await fetch(fixedUrl, options);
       let res = await response.json();
       var success = res["success"];
@@ -367,6 +372,8 @@ const _getLocPer = async () => {
    
   }catch (error) {
     console.error(error);
+  }finally{
+    spinner.stop();
   }
   };
 
@@ -376,12 +383,12 @@ const _getLocPer = async () => {
         let _errorMessage="";
         if(!title){
           _errorMessage = "공고 제목을 입력하세요";
-        // }else if(!bookDate){
-        //   _errorMessage = "예약 날짜를 입력하세요";
-        // }else if(!bookTime){
-        //   _errorMessage = "예약 시각을 입력하세요";
-        // }else if(parseInt(book)<parseInt(getNowString())) {
-        //   _errorMessage = "예약 시간을 잘못 입력하였습니다";
+        }else if(!bookDate){
+          _errorMessage = "예약 날짜를 입력하세요";
+        }else if(!bookTime){
+          _errorMessage = "예약 시각을 입력하세요";
+        }else if(!_bookCheck()) {
+          _errorMessage = "예약 시간을 잘못 입력하였습니다";
         }else if(!meetingType){
           _errorMessage = "단체 유형을 입력하세요";
         }
@@ -423,16 +430,16 @@ const _getLocPer = async () => {
         else if(!selectedLocation){
           _errorMessage = "선호지역을 입력하세요";
         }
-        // else if(!endDate){
-        //   _errorMessage = "공고 마감 날짜를 입력하세요";
-        // }
-        // else if(!endTime){
-        //   _errorMessage = "공고 마감 시각을 입력하세요";
-        // }else if(parseInt(end)<parseInt(getNowString())) {
-        //   _errorMessage = "공고 마감 시간을 잘못 입력하였습니다";
-        // }else if(parseInt(end)>parseInt(book)){
-        //   _errorMessage = "공고 마감 시간을 예약 시간 이전으로 설정해주세요."
-        // }
+        else if(!endDate){
+          _errorMessage = "공고 마감 날짜를 입력하세요";
+        }
+        else if(!endTime){
+          _errorMessage = "공고 마감 시각을 입력하세요";
+        }else if(!_endCheck()) {
+          _errorMessage = "공고 마감 시간을 잘못 입력하였습니다";
+        }else if(realBook < realEnd){
+          _errorMessage = "공고 마감 시간을 예약 시간 이전으로 설정해주세요."
+        }
         else if(!additionalContent) {
           _errorMessage = "추가 사항을 입력하세요.";
         }
@@ -451,15 +458,6 @@ const _getLocPer = async () => {
     },[errorMessage]);
 
 
-    useEffect(()=> {
- 
-      var _book = bookDate.slice(0,4)+bookDate.slice(6,8)+bookDate.slice(10,12)+bookTime.slice(0,2)+bookTime.slice(4,6);
-      var _end =  endDate.slice(0,4)+endDate.slice(6,8)+endDate.slice(10,12)+endTime.slice(0,2)+endTime.slice(4,6);
-      setBook(_book);
-      setEnd(_end);
-     
-    },[bookTime,bookDate,endDate,endTime]);
-
     useEffect(() => {
       if (buttonPress) {
         if(!isChange){
@@ -471,28 +469,12 @@ const _getLocPer = async () => {
       }
     },[buttonPress]);
 
-    const _setData = async () => {
-     
-      bookFullData = realBook;
-      endFullData = realEnd;
-      
-      return true;
-    };
-
-    const f = async (callback1, callback2) => {
-      
-      var d = await callback1();
-      
-      var res = await callback2();
-      
-      return res;
-    };
 
     //공고 등록 버튼 액션: 공고 등록 후 공고 상세 보여주기 함수 연동 후 스피너 추가
     const _onPress = async () => {
       try{
         spinner.start();
-        const result = await f(_setData, handleApi);
+        const result = await handleApi();
         if (!result) {
           alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
         }else {
@@ -515,8 +497,8 @@ const _getLocPer = async () => {
             setMinPrice("");
             setMaxPrice("");
             setRegion({
-              longitude: initialLongi,
-              latitude: initialLati,
+              longitude: longitude,
+              latitude: latitude,
               latitudeDelta: 0.3,
               longitudeDelta: 0.3,
           });
@@ -555,59 +537,46 @@ const _getLocPer = async () => {
             )});
         },[disabled]);
 
-        const getNowString =() => {
-         
-          var now = new Date();
-          var nowYear = String(now.getFullYear()); 
-          var nowMonth = now.getMonth()+1;
-          if(nowMonth < 10){
-            nowMonth = "0" + String(nowMonth);
+        // 예약 vs 현재 시간 비교
+        const _bookCheck =() => {
+          var now = moment().format()
+          if(realBook === undefined){
+            return false;
+          } else if(realBook<now){
+            return false;
           }else{
-            nowMonth = String(nowMonth);
+            return true;
           }
-          var nowDate = now.getDate();
-          if(nowDate < 10){
-            nowDate = "0" + String(nowDate);
-          }else {
-            nowDate = String(nowDate);
-          }
-          var nowHour = now.getHours();
-          if(nowHour < 10){
-            nowHour = "0" + String(nowHour);
-          }else {
-            nowHour = String(nowHour);
-          }
-          var nowMinute = now.getMinutes();
-          if(nowMinute < 10){
-            nowMinute = "0" + String(nowMinute);
-          }else {
-            nowMinute = String(nowMinute);
-          }
-          var nowString = nowYear+nowMonth+nowDate+nowHour+nowMinute;
-
-          return nowString;
         };
 
-        useEffect(()=>{
-         
+         // 마감 vs 현재 시간 비교
+         const _endCheck =() => {
+          var now = moment().format()
+          if(realEnd === undefined){
+            return false;
+          } else if(realEnd<now){
+            return false;
+          }else{
+            return true;
+          }
+        };
+
+
+
        
+
+        useEffect(()=>{
           if(bookMonth!==undefined && bookHour!== undefined && bookMinute !== undefined && bookDay !== undefined && bookYear !== undefined){
-            
-            var moment = require('moment');
-            var time = moment(bookYear+"-"+bookMonth+"-"+bookDay+" "+bookHour+":"+bookMinute).utc(true).toDate();
-            var data = time.toISOString();
-             
-            setRealBook(data);
+            var time = moment(bookYear+"-"+bookMonth+"-"+bookDay+" "+bookHour+":"+bookMinute).format('YYYY-MM-DDTHH:mm:ss[Z]');
+            setRealBook(time);
           }
         }, [bookMonth, bookDay, bookYear, bookHour, bookMinute]);
 
         useEffect(()=>{
           if(endMonth!==undefined && endHour !== undefined && endMinute !== undefined && endDay !== undefined && endYear!==undefined){
-            var moment = require('moment');
-            var time = moment(endYear+"-"+endMonth+"-"+endDay+" "+endHour+":"+endMinute).utc(true).toDate();
-            var data = time.toISOString();
+            var time = moment(endYear+"-"+endMonth+"-"+endDay+" "+endHour+":"+endMinute).format('YYYY-MM-DDTHH:mm:ss[Z]');
           
-            setRealEnd(data);
+            setRealEnd(time);
           }
        }, [endMonth, endDay, endYear, endHour, endMinute]);
 
@@ -692,16 +661,17 @@ const _getLocPer = async () => {
     setEndTimeVisible(false);
   };
 
-  const _changeDate = date => {
-    var w = days[moment(date).day()];
-    let text = moment(date).format('YYYY년 MM월 DD일 ') + w;
-    return text;
-  }
+  const setDateData = (data) => {
+    var date = data.slice(0,4)+"년 "+data.slice(5,7)+"월 "+data.slice(8,10)+"일";
+    console.log(date)
+    return date;
+  };
 
-  const _changeTime = date => {
-    let text = moment(date).format('hh시 mm분');
-    return text;
-  }
+  const setTimeData = (data) => {
+    var time = data.slice(11,13)+"시 "+data.slice(14,16)+"분";
+    console.log(time)
+    return time;
+  };
 
   // 수정할 공고 정보 불러오기
   useEffect( () => {
@@ -719,13 +689,12 @@ const _getLocPer = async () => {
       setLoc(route.params.addr);
       setMinPrice(route.params.minPrice);
       setMaxPrice(route.params.maxPrice);
-      setRegion({
-        longitude: initialLongi,
-        latitude: initialLati,
-        latitudeDelta: 0.3,
-        longitudeDelta: 0.3,
-
-    });
+      setBookDate(setDateData(route.params.reservation));
+      setBookTime(setTimeData(route.params.reservation));
+      setEndDate(setDateData(route.params.deadline));
+      setEndTime(setTimeData(route.params.deadline));
+      setRealBook(route.params.reservation);
+      setRealEnd(route.params.deadline)
     }
   },[route.params]);
 
@@ -737,14 +706,14 @@ const _getLocPer = async () => {
   // 수정 put 보내기
   const putApi = async () => {
 
-    let fixedUrl = url+"/auction/"+`${auctionId}`;
+    let fixedUrl = aurl+"/auction/"+`${auctionId}`;
 
     let Info = {
       content: additionalContent,
-      deadline: endFullData,
+      deadline: realEnd,
       maxPrice: maxPrice,
       minPrice: minPrice,
-      reservation: bookFullData,
+      reservation: realBook,
       storeType: JSON.stringify(foodType),
       title: title,
       groupType: meetingType,
@@ -780,7 +749,7 @@ const _ChangeAuction = async() => {
     spinner.start();
     var result;
 
-    result = await f(_setData, putApi);
+    result = await putApi();
 
     if (!result) {
       alert("오류가 발생하였습니다. 잠시후 다시 시도해주세요.");
@@ -804,8 +773,8 @@ const _ChangeAuction = async() => {
         setMinPrice("");
         setMaxPrice("");
         setRegion({
-          longitude: initialLongi,
-          latitude: initialLati,
+          longitude: longitude,
+          latitude: latitude,
           latitudeDelta: 0.3,
           longitudeDelta: 0.3,
       });

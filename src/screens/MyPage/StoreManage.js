@@ -166,6 +166,7 @@ const StoreManage = ({ navigation }) => {
         
     }, []);
 
+
     // 서버 get 처리
     const getApi = async (url) => {
 
@@ -219,11 +220,13 @@ const StoreManage = ({ navigation }) => {
                     setFacilityEtcs(res.data.facility.facilityEtcs);
                     _changeFac(res.data.facility.facilityEtcs);
                 }
+                
+                useEffect(()=> {
+                    spinner.stop();
+                },[setStoreImages]);
             }
         }catch(e){
                 console.log("Error", e.message);
-        }finally{
-            spinner.stop();
         }
     }
 
@@ -238,10 +241,13 @@ const StoreManage = ({ navigation }) => {
             if(res.success){
                 setMenus(res.list);
             }
+
+            useEffect(()=>{
+                spinner.stop()
+            },[menus]);
+
         }catch(e){
                 console.log("Error", e.message);
-        }finally{
-            spinner.stop();
         }
               
     };
@@ -392,7 +398,7 @@ const StoreManage = ({ navigation }) => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-
+            console.log(res);
             return res["success"];
             
             
@@ -504,7 +510,7 @@ const StoreManage = ({ navigation }) => {
                     />
                     <RowItemContainer>
                         <DescTitle>업체 사진</DescTitle>
-                        {storeImages.map( item => 
+                        {storeImages.reverse().map( item => 
                             <StoreImage source={{uri : item.path}} key = {item.id}/>
                         )}
                     </RowItemContainer>
@@ -528,6 +534,9 @@ const StoreManage = ({ navigation }) => {
                     </View>
                     <Modal visible={isMenuModal} transparent={true}>
                         <TouchableOpacity style={styles.background} onPress={() => setIsMenuModal(false)} />
+                        <KeyboardAwareScrollView
+                extraScrollHeight={20}
+            >
                         <MenuContainer>
                             <ManageText 
                                 name="name"
@@ -565,6 +574,7 @@ const StoreManage = ({ navigation }) => {
                                 <Button title="저장" onPress={_onMenuPress} containerStyle={{ width: '40%' }} disabled={menuDisalbed}/>
                             </ButtonContainer>
                         </MenuContainer>
+                        </KeyboardAwareScrollView>
                     </Modal>
                     
                     {menus.map(item => (
