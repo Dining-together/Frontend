@@ -192,50 +192,17 @@ const  StoreInfo = ({navigation}) => {
             console.error(error);
           }
     };
-    const _onPwPress = async() => {
-        try{
-            spinner.start();
-            const result = await postApi();
-            console.log(result)
-            if(result){
-                navigation.navigate("StoreInfoChange",
-                    { photo: photo, userName: userName, email: email });
-                setPw('');
-                setIsPwModal(false);
-            }
-            else{
-                alert("비밀번호를 다시 입력해주세요");
-            }
-        }catch(e){
-                console.log("Error", e.message);
-        }finally{
-            spinner.stop();
-        }
-    }
+
     return (
         <Container>
             <KeyboardAwareScrollView
                 extraScrollHeight={20}>
             <InfoChangeButton
-                    onPress={() =>{setIsPwModal(true);}}>
+                    onPress={() =>{navigation.navigate("StoreInfoChange",
+                    { photo: photo, userName: userName, email: email });}}>
                     <InfoChangeText>내 정보 수정하기</InfoChangeText>
                 </InfoChangeButton>
-                <Modal visible={isPwModal} transparent={true}>
-                        <TouchableOpacity style={styles.background} onPress={() => {setIsPwModal(false); setPw('');}} />
-                        <PwContainer>
-                            <StyledTextInput
-                                width={80}
-                                value={pw}
-                                placeholder="비밀번호"
-                                secureTextEntry={true}
-                                returnKeyType= "done"
-                                onChangeText={text => setPw(text)}
-                            />
-                            <SmallButton title="확인" containerStyle={{width: '20%', marginLeft:10, height: 50, marginTop: 10}}
-                                onPress={_onPwPress}
-                            />
-                        </PwContainer>
-                    </Modal>
+                
                 {/* 사진 불러오기 */}
                 <ProfileImage url={photo}/>
                 <InfoContainer>

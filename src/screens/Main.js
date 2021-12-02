@@ -2,13 +2,14 @@ import React, { useState, useEffect, useContext } from 'react';
 import styled from "styled-components/native";
 import { IconButton } from "../components";
 import { images } from '../images';
-import { FlatList, ScrollView, Dimensions } from "react-native";
+import { FlatList, ScrollView, Dimensions, Alert } from "react-native";
 import { popular, recomendedStore, StoreList } from "../utils/data";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ThemeContext } from "styled-components";
 import {LoginContext, UrlContext, ProgressContext} from "../contexts";
 import {_sortLatest, cutDateData, changeListData, createdDate, changeCreatedDateData, removeWhitespace, _sortPopular} from "../utils/common";
 import * as Location from "expo-location";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WIDTH = Dimensions.get("screen").width;
 const HEIGHT = Dimensions.get("screen").height;
@@ -206,7 +207,7 @@ const Store = ({ item: { id, storeName, score, reviews, foodType, path }, onPres
 const Main = ({ navigation }) => {
     const theme = useContext(ThemeContext);
     const { aurl, url} = useContext(UrlContext);
-    const {allow, autoLogin, doc, mode, token, latitude, longitude, setLatitude, setLongitude, setAllow} = useContext(LoginContext);
+    const {allow, autoLogin, doc, mode, token, latitude, longitude, setLatitude, setLongitude, setAllow, infoSetting, setInfoSetting} = useContext(LoginContext);
     const {spinner} = useContext(ProgressContext);
 
     const [input, setInput] = useState("");
@@ -287,8 +288,62 @@ const Main = ({ navigation }) => {
         }
 };
 
+const _checkInfoSetting = async () => {
+    let fixedUrl = url+"/member/customer";
+
+    let options = {
+        method: 'GET',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-AUTH-TOKEN' : token,
+        },
+    };
+
+    try {
+        spinner.start();
+        let response = await fetch(fixedUrl, options);
+        let res = await response.json();
+        if((res.data.gender===null)||(res.data.addr===null)){
+            return false
+        }else{
+            return true
+        }
+    }catch(error) {
+        console.error(error);
+    }finally {
+        spinner.stop();
+    }
+};
+
+    const SettingAlert = async () => {
+        let isSetting = await _checkInfoSetting();
+            if(isSetting===true){
+                setInfoSetting(true)
+            }else{
+                Alert.alert("알림","회원 정보를 업데이트 해주세요.");
+            }
+    }
+
+    // getAllKeys = async () => {
+    //     let keys = []
+    //     try {
+    //       keys = await AsyncStorage.getAllKeys()
+    //     } catch(e) {
+    //       console.log(e)
+    //     }
+      
+    //     console.log(keys)
+        
+    //   }
+      
+
     useEffect(()=>{
         handleAuctionApi();
+        if(infoSetting===false){
+            SettingAlert();
+        }
+        // getAllKeys();
     },[]);
 
     useEffect(()=> {

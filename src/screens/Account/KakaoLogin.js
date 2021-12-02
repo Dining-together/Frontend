@@ -85,11 +85,10 @@ const KakaoLogin = () => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            setMode(res["type"]);
+            setMode("CUSTOMER");
             setId(res["id"]);
             await getAllowApi()
             .then(() => {
-                console.log("드디어?")
                 setSuccess(true)});
             return res["type"];
         }catch(error) {
@@ -133,8 +132,7 @@ const KakaoLogin = () => {
             {/* 인가 코드 받아오기 */}
             <WebView
                 originWhitelist={['*']}
-                scalesPageToFit={false}
-                style={{ marginTop: 30 }}                
+                scalesPageToFit={true}                
                 source={{ uri: `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}` }}
                 javaScriptEnabled={true}
                 injectedJavaScript={runFirst}

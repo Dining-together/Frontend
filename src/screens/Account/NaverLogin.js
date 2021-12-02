@@ -14,7 +14,7 @@ const NaverLogin = () => {
     const {token, mode, doc, allow, setSuccess, setAllow, setAutoLogin, setToken, setMode, setId, setLatitude, setLongitude} = useContext(LoginContext);
 
     const CLIENT_ID = "9MUAPcyGVhbTteFu3l97";
-    const REDIRECT_URI = url+"/member/social/login/naver";
+    let REDIRECT_URI = url+"/member/social/login/naver";
     const runFirst = `window.ReactNativeWebView.postMessage("this is message from web");`;
 
     let tokenData = "";
@@ -31,11 +31,8 @@ const NaverLogin = () => {
             let condition2 = data.indexOf(exp2);
 
             if (condition != -1 && condition2 != -1) {
-                console.log("data: " + data);
                 let request_code = data.substring(condition + exp.length, condition2);
-                console.log("access code: " + request_code);
                 let request_state = data.substring(condition2 + exp2.length);
-                console.log("access state: " + request_state);
 
                 // 인가코드 전달 -> 토큰 발급
                 _handleLoginPress(request_code);
@@ -59,7 +56,6 @@ const NaverLogin = () => {
         };
 
         try{
-            console.log(token_url)
             let response = await fetch(token_url, options);
             let res = await response.json();
 
@@ -91,11 +87,10 @@ const NaverLogin = () => {
         try {
             let response = await fetch(fixedUrl, options);
             let res = await response.json();
-            setMode(res["type"]);
+            setMode("CUSTOMER");
             setId(res["id"]);
             await getAllowApi()
             .then(() => {
-                console.log("드디어?")
                 setSuccess(true)});
             return res["type"];
         }catch(error) {
@@ -134,13 +129,13 @@ const NaverLogin = () => {
     };
 
 
+
     return (
         <View style={{ flex: 1 }}>
             {/* 인가 코드 받아오기 */}
             <WebView
                 originWhitelist={['*']}
-                scalesPageToFit={false}
-                style={{ marginTop: 30 }}                
+                scalesPageToFit={true}    
                 source={{ uri: `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${random_state}` }}
                 javaScriptEnabled={true}
                 injectedJavaScript={runFirst}
